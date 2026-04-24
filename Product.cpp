@@ -22,3 +22,21 @@ Milk::Milk(Game* r_pGame, point r_point)
 	: Product(r_pGame, r_point, 40, 40, "images\\milk.jpg")
 {
 }
+
+Wool::Wool(Game* r_pGame, point r_point)
+	: Product(r_pGame, r_point, 36, 28, "")
+{
+}
+
+void Wool::draw() const
+{
+	window* pWind = pGame->getWind();
+
+	pWind->SetPen(color(180, 180, 180), 1);
+	pWind->SetBrush(WHITE);
+	pWind->DrawCircle(RefPoint.x + 10, RefPoint.y + 12, 8);
+	pWind->DrawCircle(RefPoint.x + 18, RefPoint.y + 9, 9);
+	pWind->DrawCircle(RefPoint.x + 26, RefPoint.y + 12, 8);
+	pWind->DrawCircle(RefPoint.x + 15, RefPoint.y + 18, 8);
+	pWind->DrawCircle(RefPoint.x + 23, RefPoint.y + 18, 8);
+}

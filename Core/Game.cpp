@@ -5,10 +5,12 @@ Game::Game()
 {
 	eggCount = 0;
 	milkCount = 0;
+	woolCount = 0;
 	for (int i = 0; i < kMaxProducts; i++)
 	{
 		eggList[i] = nullptr;
 		milkList[i] = nullptr;
+		woolList[i] = nullptr;
 	}
 
 	budget = kStartingBudget;
@@ -21,6 +23,7 @@ Game::Game()
 
 	//1 - Create the main window
 	pWind = CreateWind(config.windWidth, config.windHeight, config.wx, config.wy);
+	pWind->SetBuffering(true);
 
 	//2 - create and draw the toolbar
 	createToolbar();
@@ -53,6 +56,11 @@ Game::~Game()
 	for (int i = 0; i < milkCount; i++)
 	{
 		delete milkList[i];
+	}
+
+	for (int i = 0; i < woolCount; i++)
+	{
+		delete woolList[i];
 	}
 
 	delete gameToolbar;
@@ -264,6 +272,39 @@ void Game::DrawProducts() const
 			milkList[i]->draw();
 		}
 	}
+
+	for (int i = 0; i < woolCount; i++)
+	{
+		if (woolList[i] != nullptr)
+		{
+			woolList[i]->draw();
+		}
+	}
+}
+
+void Game::clearProducts()
+{
+	for (int i = 0; i < eggCount; i++)
+	{
+		delete eggList[i];
+		eggList[i] = nullptr;
+	}
+
+	for (int i = 0; i < milkCount; i++)
+	{
+		delete milkList[i];
+		milkList[i] = nullptr;
+	}
+
+	for (int i = 0; i < woolCount; i++)
+	{
+		delete woolList[i];
+		woolList[i] = nullptr;
+	}
+
+	eggCount = 0;
+	milkCount = 0;
+	woolCount = 0;
 }
 
 void Game::updateTimer()
@@ -279,6 +320,7 @@ void Game::updateTimer()
 
 void Game::restartGame()
 {
+	clearProducts();
 	budget = kStartingBudget;
 	isPaused = false;
 	timer = 60;
@@ -321,6 +363,42 @@ void Game::loadGame()
 	printMessage("Load is ready to be connected to file logic");
 }
 
+bool Game::addEgg(point location)
+{
+	if (eggCount >= kMaxProducts)
+	{
+		return false;
+	}
+
+	eggList[eggCount] = new Egg(this, location);
+	eggCount++;
+	return true;
+}
+
+bool Game::addMilk(point location)
+{
+	if (milkCount >= kMaxProducts)
+	{
+		return false;
+	}
+
+	milkList[milkCount] = new Milk(this, location);
+	milkCount++;
+	return true;
+}
+
+bool Game::addWool(point location)
+{
+	if (woolCount >= kMaxProducts)
+	{
+		return false;
+	}
+
+	woolList[woolCount] = new Wool(this, location);
+	woolCount++;
+	return true;
+}
+
 window* Game::getWind() const
 {
 	return pWind;
@@ -349,6 +427,7 @@ void Game::go()
 			if (timer <= 0)
 			{
 				printMessage("Game Over!");
+				pWind->UpdateBuffer();
 				isExit = true;
 				continue;
 			}
@@ -359,6 +438,8 @@ void Game::go()
 			animals = gameBudgetbar->getAnimalCount();
 			updateStatusBar();
 		}
+
+		pWind->UpdateBuffer();
 
 		Sleep(60);
 

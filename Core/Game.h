@@ -13,8 +13,10 @@ private:
 	Budgetbar* gameBudgetbar;
 	Egg* eggList[kMaxProducts];
 	Milk* milkList[kMaxProducts];
+	Wool* woolList[kMaxProducts];
 	int eggCount;
 	int milkCount;
+	int woolCount;
 	bool isPaused;
 	unsigned long lastTime;
 	int timer;
@@ -22,6 +24,7 @@ private:
 	int goal;
 	int animals;
 	void DrawProducts() const;
+	void clearProducts();
 
 public:
 	static constexpr int kStartingBudget = 2000;
@@ -50,6 +53,9 @@ public:
 	void resumeGame();
 	void saveGame() const;
 	void loadGame();
+	bool addEgg(point location);
+	bool addMilk(point location);
+	bool addWool(point location);
 
 
 	void printMessage(string msg) const;	//Print a message on Status bar

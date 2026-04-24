@@ -23,3 +23,10 @@ class Milk : public Product
 public:
 	Milk(Game* r_pGame, point r_point);
 };
+
+class Wool : public Product
+{
+public:
+	Wool(Game* r_pGame, point r_point);
+	virtual void draw() const override;
+};

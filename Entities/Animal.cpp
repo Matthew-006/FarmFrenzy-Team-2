@@ -13,7 +13,9 @@ Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string i
 	dx = (rand() % 5) - 2;
 	dy = (rand() % 5) - 2;
 	changeCounter = 0;
-
+	lastProductTick = GetTickCount();
+	productIntervalMs = 0;
+	productType = PRODUCT_NONE;
 }
 
 void Animal::draw() const
@@ -23,8 +25,80 @@ void Animal::draw() const
 	pWind->DrawImage(image_path, RefPoint.x, RefPoint.y, width, height);
 }
 
+bool Animal::isProductReady()
+{
+	if (productIntervalMs <= 0)
+	{
+		return false;
+	}
+
+	unsigned long currentTick = GetTickCount();
+	if (currentTick - lastProductTick < static_cast<unsigned long>(productIntervalMs))
+	{
+		return false;
+	}
+
+	lastProductTick = currentTick;
+	return true;
+}
+
+int Animal::getRemainingProductSeconds() const
+{
+	if (productIntervalMs <= 0)
+	{
+		return -1;
+	}
+
+	unsigned long currentTick = GetTickCount();
+	unsigned long elapsedMs = currentTick - lastProductTick;
+	if (elapsedMs >= static_cast<unsigned long>(productIntervalMs))
+	{
+		return 0;
+	}
+
+	unsigned long remainingMs = static_cast<unsigned long>(productIntervalMs) - elapsedMs;
+	return static_cast<int>((remainingMs + 999) / 1000);
+}
+
+void Animal::drawCounter() const
+{
+	int remainingSeconds = getRemainingProductSeconds();
+	if (remainingSeconds < 0)
+	{
+		return;
+	}
+
+	window* pWind = pGame->getWind();
+	pWind->SetPen(BLACK, 1);
+	pWind->SetFont(12, BOLD, BY_NAME, "Arial");
+	pWind->DrawString(RefPoint.x + 8, RefPoint.y - 14, to_string(remainingSeconds));
+}
+
+void Animal::produceProduct()
+{
+	point productPoint;
+	productPoint.x = RefPoint.x + (width / 2);
+	productPoint.y = RefPoint.y + height;
+
+	if (productType == PRODUCT_EGG)
+	{
+		pGame->addEgg(productPoint);
+	}
+	else if (productType == PRODUCT_MILK)
+	{
+		pGame->addMilk(productPoint);
+	}
+	else if (productType == PRODUCT_WOOL)
+	{
+		pGame->addWool(productPoint);
+	}
+}
+
 Chick::Chick(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
-{}
+{
+	setProductIntervalMs(10000);
+	setProductType(PRODUCT_EGG);
+}
 
 void Chick::moveStep()
 {
@@ -63,11 +137,20 @@ void Chick::moveStep()
 		setDy(-getDy());
 	}
 
+	if (isProductReady())
+	{
+		produceProduct();
+	}
+
 	draw();
+	drawCounter();
 }
 
 Cow::Cow(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
-{}
+{
+	setProductIntervalMs(10000);
+	setProductType(PRODUCT_MILK);
+}
 
 void Cow::moveStep()
 {
@@ -106,7 +189,13 @@ void Cow::moveStep()
 		setDy(-getDy());
 	}
 
+	if (isProductReady())
+	{
+		produceProduct();
+	}
+
 	draw();
+	drawCounter();
 
 }
 
@@ -155,6 +244,8 @@ void Wolf::moveStep()
 
 Sheep::Sheep(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
 {
+	setProductIntervalMs(10000);
+	setProductType(PRODUCT_WOOL);
 }
 void Sheep::moveStep()
 {
@@ -193,12 +284,20 @@ void Sheep::moveStep()
 		setDy(-getDy());
 	}
 
+	if (isProductReady())
+	{
+		produceProduct();
+	}
+
 	draw();
+	drawCounter();
 
 }
 
 Goat::Goat(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
 {
+	setProductIntervalMs(10000);
+	setProductType(PRODUCT_MILK);
 }
 
 void Goat::moveStep()
@@ -238,7 +337,13 @@ void Goat::moveStep()
 		setDy(-getDy());
 	}
 
+	if (isProductReady())
+	{
+		produceProduct();
+	}
+
 	draw();
+	drawCounter();
 
 }
 

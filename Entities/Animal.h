@@ -3,10 +3,22 @@
 
 class Animal :public Drawable
 {
+protected:
+	enum ProductType
+	{
+		PRODUCT_NONE,
+		PRODUCT_EGG,
+		PRODUCT_MILK,
+		PRODUCT_WOOL
+	};
+
 private:
 	string image_path;
 	int dx, dy;
 	int changeCounter;
+	unsigned long lastProductTick;
+	int productIntervalMs;
+	ProductType productType;
 public:
 	point curr_pos;
 	point curr_vel;
@@ -20,6 +32,13 @@ public:
 	int getDy() const { return dy; }
 	void setChangeCounter(int v) { changeCounter = v; }
 	int getChangeCounter() const { return changeCounter; }
+	void setProductIntervalMs(int v) { productIntervalMs = v; }
+	int getProductIntervalMs() const { return productIntervalMs; }
+	void setProductType(ProductType value) { productType = value; }
+	bool isProductReady();
+	int getRemainingProductSeconds() const;
+	void drawCounter() const;
+	void produceProduct();
 };
 
 class Chick : public Animal
