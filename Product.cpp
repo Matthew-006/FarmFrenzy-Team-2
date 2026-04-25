@@ -5,12 +5,16 @@ Product::Product(Game* r_pGame, point r_point, int r_width, int r_height, std::s
 	: Drawable(r_pGame, r_point, r_width, r_height)
 {
 	image_path = img_path;
+	if (!image_path.empty())
+	{
+		sprite.Open(image_path);
+	}
 }
 
 void Product::draw() const
 {
 	window* pWind = pGame->getWind();
-	pWind->DrawImage(image_path, RefPoint.x, RefPoint.y, width, height);
+	pWind->DrawImage(sprite, RefPoint.x, RefPoint.y, width, height);
 }
 
 Egg::Egg(Game* r_pGame, point r_point)

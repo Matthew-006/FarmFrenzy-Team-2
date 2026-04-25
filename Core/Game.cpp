@@ -1,6 +1,17 @@
 #include "Game.h"
 #include "../Config/GameConfig.h"
 
+namespace
+{
+	bool rectanglesOverlap(const point& firstPoint, int firstWidth, int firstHeight, const point& secondPoint, int secondWidth, int secondHeight)
+	{
+		return firstPoint.x < secondPoint.x + secondWidth &&
+			firstPoint.x + firstWidth > secondPoint.x &&
+			firstPoint.y < secondPoint.y + secondHeight &&
+			firstPoint.y + firstHeight > secondPoint.y;
+	}
+}
+
 Game::Game()
 {
 	wolfCount = 0;
@@ -158,30 +169,74 @@ void Game::drawWarehouse() const
 {
 	const int fieldTop = 2 * config.toolBarHeight;
 	const int fieldBottom = config.windHeight - config.statusBarHeight;
-	const int warehouseLeft = config.windWidth - config.warehouseWidth - 35;
-	const int warehouseRight = warehouseLeft + config.warehouseWidth;
-	const int warehouseBottom = fieldBottom - 35;
-	const int warehouseTop = warehouseBottom - config.warehouseHeight;
+	const int warehouseWidth = config.warehouseWidth;
+	const int warehouseHeight = config.warehouseHeight + 120;
+	const int warehouseLeft = config.windWidth - warehouseWidth - 35;
+	const int warehouseRight = warehouseLeft + warehouseWidth;
+	const int warehouseBottom = fieldBottom - 25;
+	const int warehouseTop = warehouseBottom - warehouseHeight;
+	const int windowLeft = warehouseLeft + 14;
+	const int windowRight = warehouseRight - 14;
+	const int windowTop = warehouseTop + 52;
+	const int windowBottom = warehouseBottom - 96;
 
 	pWind->SetPen(BLACK, 3);
 	pWind->SetBrush(color(196, 129, 79));
 	pWind->DrawRectangle(warehouseLeft, warehouseTop, warehouseRight, warehouseBottom);
 
-	int roofX[3] = { warehouseLeft - 10, warehouseLeft + (config.warehouseWidth / 2), warehouseRight + 10 };
+	int roofX[3] = { warehouseLeft - 10, warehouseLeft + (warehouseWidth / 2), warehouseRight + 10 };
 	int roofY[3] = { warehouseTop, warehouseTop - 70, warehouseTop };
 	pWind->SetBrush(color(145, 53, 40));
 	pWind->DrawPolygon(roofX, roofY, 3);
 
 	pWind->SetBrush(color(104, 67, 40));
-	pWind->DrawRectangle(warehouseLeft + 60, warehouseBottom - 75, warehouseLeft + 130, warehouseBottom);
+	pWind->DrawRectangle(warehouseLeft + 56, warehouseBottom - 88, warehouseLeft + 126, warehouseBottom);
 
+	pWind->SetPen(color(96, 68, 45), 3);
 	pWind->SetBrush(color(188, 225, 255));
-	pWind->DrawRectangle(warehouseLeft + 20, warehouseTop + 35, warehouseLeft + 55, warehouseTop + 70);
-	pWind->DrawRectangle(warehouseRight - 55, warehouseTop + 35, warehouseRight - 20, warehouseTop + 70);
+	pWind->DrawRectangle(windowLeft, windowTop, windowRight, windowBottom, FILLED, 10, 10);
+	drawWarehouseInventory(windowLeft + 10, windowTop + 10, windowRight - 10, windowBottom - 10);
 
 	pWind->SetPen(BLACK, 2);
-	pWind->SetFont(20, BOLD, BY_NAME, "Arial");
-	pWind->DrawString(warehouseLeft + 35, warehouseTop + 100, "Warehouse");
+	pWind->SetFont(22, BOLD, BY_NAME, "Arial");
+	pWind->DrawString(warehouseLeft + 28, warehouseTop + 20, "Warehouse");
+}
+
+void Game::drawWarehouseInventory(int left, int top, int right, int bottom) const
+{
+	const int itemX = left + 12;
+	const int countX = left + 62;
+	const int priceX = left + 104;
+	const int row1Y = top + 34;
+	const int rowGap = 28;
+
+	pWind->SetPen(color(120, 86, 54), 2);
+	pWind->SetBrush(color(248, 239, 214));
+	pWind->DrawRectangle(left, top, right, bottom);
+
+	pWind->SetPen(color(147, 106, 68), 1);
+	pWind->DrawLine(left, top + 26, right, top + 26);
+	pWind->DrawLine(countX - 12, top + 2, countX - 12, bottom - 2);
+	pWind->DrawLine(priceX - 12, top + 2, priceX - 12, bottom - 2);
+
+	pWind->SetPen(BLACK, 1);
+	pWind->SetFont(13, BOLD, BY_NAME, "Arial");
+	pWind->DrawString(itemX, top + 7, "Item");
+	pWind->DrawString(countX, top + 7, "Count");
+	pWind->DrawString(priceX, top + 7, "Price");
+
+	pWind->SetFont(13, PLAIN, BY_NAME, "Arial");
+	pWind->DrawString(itemX, row1Y, "Eggs");
+	pWind->DrawString(countX, row1Y, "0");
+	pWind->DrawString(priceX, row1Y, to_string(kEggPrice) + "$");
+
+	pWind->DrawString(itemX, row1Y + rowGap, "Milk");
+	pWind->DrawString(countX, row1Y + rowGap, "0");
+	pWind->DrawString(priceX, row1Y + rowGap, to_string(kMilkPrice) + "$");
+
+	pWind->DrawString(itemX, row1Y + (2 * rowGap), "Wool");
+	pWind->DrawString(countX, row1Y + (2 * rowGap), "0");
+	pWind->DrawString(priceX, row1Y + (2 * rowGap), to_string(kWoolPrice) + "$");
 }
 
 void Game::drawFoodArea() const
@@ -311,6 +366,70 @@ void Game::clearProducts()
 	woolCount = 0;
 }
 
+bool Game::isProductAreaFree(const point& location, int width, int height) const
+{
+	const int fieldLeft = config.fieldPadding;
+	const int fieldTop = (2 * config.toolBarHeight) + config.fieldPadding;
+	const int fieldRight = config.windWidth - config.fieldPadding;
+	const int fieldBottom = config.windHeight - config.statusBarHeight - config.fieldPadding;
+
+	if (location.x < fieldLeft || location.y < fieldTop || location.x + width > fieldRight || location.y + height > fieldBottom)
+	{
+		return false;
+	}
+
+	for (int i = 0; i < eggCount; i++)
+	{
+		if (eggList[i] != nullptr && rectanglesOverlap(location, width, height, eggList[i]->getRefPoint(), 30, 30))
+		{
+			return false;
+		}
+	}
+
+	for (int i = 0; i < milkCount; i++)
+	{
+		if (milkList[i] != nullptr && rectanglesOverlap(location, width, height, milkList[i]->getRefPoint(), 40, 40))
+		{
+			return false;
+		}
+	}
+
+	for (int i = 0; i < woolCount; i++)
+	{
+		if (woolList[i] != nullptr && rectanglesOverlap(location, width, height, woolList[i]->getRefPoint(), 36, 28))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool Game::findFreeProductSpot(point& location, int width, int height) const
+{
+	static const int offsets[][2] =
+	{
+		{0, 0}, {20, 0}, {-20, 0}, {0, 20}, {0, -20},
+		{20, 20}, {-20, 20}, {20, -20}, {-20, -20},
+		{40, 0}, {-40, 0}, {0, 40}, {0, -40}
+	};
+
+	point baseLocation = location;
+	for (int i = 0; i < static_cast<int>(sizeof(offsets) / sizeof(offsets[0])); i++)
+	{
+		point candidate;
+		candidate.x = baseLocation.x + offsets[i][0];
+		candidate.y = baseLocation.y + offsets[i][1];
+		if (isProductAreaFree(candidate, width, height))
+		{
+			location = candidate;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void Game::updateTimer()
 {
 	unsigned long currentTime = GetTickCount();
@@ -369,6 +488,11 @@ void Game::loadGame()
 
 bool Game::addEgg(point location)
 {
+	if (!findFreeProductSpot(location, 30, 30))
+	{
+		return false;
+	}
+
 	if (eggCount >= kMaxProducts)
 	{
 		return false;
@@ -381,6 +505,11 @@ bool Game::addEgg(point location)
 
 bool Game::addMilk(point location)
 {
+	if (!findFreeProductSpot(location, 40, 40))
+	{
+		return false;
+	}
+
 	if (milkCount >= kMaxProducts)
 	{
 		return false;
@@ -393,6 +522,11 @@ bool Game::addMilk(point location)
 
 bool Game::addWool(point location)
 {
+	if (!findFreeProductSpot(location, 36, 28))
+	{
+		return false;
+	}
+
 	if (woolCount >= kMaxProducts)
 	{
 		return false;

@@ -7,6 +7,10 @@ using namespace std;
 Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	image_path = img_path;
+	if (!image_path.empty())
+	{
+		sprite.Open(image_path);
+	}
 	curr_pos = r_point;
 	curr_vel.x = 1;
 	curr_vel.y = 1;
@@ -22,7 +26,7 @@ void Animal::draw() const
 {
 	//draw image of this object
 	window* pWind = pGame->getWind();
-	pWind->DrawImage(image_path, RefPoint.x, RefPoint.y, width, height);
+	pWind->DrawImage(sprite, RefPoint.x, RefPoint.y, width, height);
 }
 
 bool Animal::isProductReady()

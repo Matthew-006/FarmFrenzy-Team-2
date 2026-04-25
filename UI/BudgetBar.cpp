@@ -30,13 +30,17 @@ namespace
 BudgetbarIcon::BudgetbarIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	image_path = img_path;
+	if (!image_path.empty())
+	{
+		iconImage.Open(image_path);
+	}
 }
 
 void BudgetbarIcon::draw() const
 {
 	//draw image of this object
 	window* pWind = pGame->getWind();
-	pWind->DrawImage(image_path, RefPoint.x, RefPoint.y, width, height);
+	pWind->DrawImage(iconImage, RefPoint.x, RefPoint.y, width, height);
 }
 
 ChickIcon::ChickIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : BudgetbarIcon(r_pGame, r_point, r_width, r_height, img_path)
@@ -342,6 +346,7 @@ void SheepIcon::resetAnimals()
 WaterIcon::WaterIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : BudgetbarIcon(r_pGame, r_point, r_width, r_height, img_path)
 {
 	waterList = new Water * [max_budget_items];
+	grassImage.Open("images\\grass.jpeg");
 	for (int i = 0; i < max_budget_items; i++) {
 		waterList[i] = nullptr;
 		grassTileCounts[i] = 0;
@@ -399,7 +404,7 @@ void WaterIcon::onClick()
 		window* pWind = pGame->getWind();
 		for (int i = 0; i < grassTileCounts[count]; i++)
 		{
-			pWind->DrawImage("images\\grass.jpeg", grassTiles[count][i].x, grassTiles[count][i].y, tileSize, tileSize);
+			pWind->DrawImage(grassImage, grassTiles[count][i].x, grassTiles[count][i].y, tileSize, tileSize);
 		}
 
 		waterList[count] = new Water(pGame, p, 50, 50, image_path);
@@ -418,7 +423,7 @@ void WaterIcon::updateAnimals()
 		{
 			for (int j = 0; j < grassTileCounts[i]; j++)
 			{
-				pWind->DrawImage("images\\grass.jpeg", grassTiles[i][j].x, grassTiles[i][j].y, 50, 50);
+				pWind->DrawImage(grassImage, grassTiles[i][j].x, grassTiles[i][j].y, 50, 50);
 			}
 
 			waterList[i]->draw();
