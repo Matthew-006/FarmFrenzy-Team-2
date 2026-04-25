@@ -14,6 +14,8 @@ private:
 	Egg* eggList[kMaxProducts];
 	Milk* milkList[kMaxProducts];
 	Wool* woolList[kMaxProducts];
+	Wolf* wolfList[kMaxProducts];
+	int wolfCount;
 	int eggCount;
 	int milkCount;
 	int woolCount;
@@ -25,6 +27,7 @@ private:
 	int animals;
 	void DrawProducts() const;
 	void clearProducts();
+	void showRandomWolf();
 
 public:
 	static constexpr int kStartingBudget = 2000;

@@ -3,6 +3,10 @@
 
 Game::Game()
 {
+	wolfCount = 0;
+	for (int i = 0; i < kMaxProducts; i++) {
+		wolfList[i] = nullptr;
+	}
 	eggCount = 0;
 	milkCount = 0;
 	woolCount = 0;
@@ -423,7 +427,6 @@ void Game::go()
 		if (!isPaused)
 		{
 			updateTimer();
-
 			if (timer <= 0)
 			{
 				printMessage("Game Over!");
@@ -434,6 +437,12 @@ void Game::go()
 
 			drawFoodArea();
 			DrawProducts();
+			showRandomWolf();
+			for (int i = 0; i < wolfCount; i++) {
+				if (wolfList[i] != nullptr) {
+					wolfList[i]->moveStep();
+				}
+			}
 			gameBudgetbar->updateAnimals();
 			animals = gameBudgetbar->getAnimalCount();
 			updateStatusBar();
@@ -461,5 +470,15 @@ void Game::go()
 		}
 	} while (!isExit && pWind->IsOpen());
 }
+void Game::showRandomWolf() {
+	int showChance = 30 + (level * 5);
 
+	if (wolfCount < kMaxProducts && (rand() % 10000) < showChance) {
+		int x = 100 + (rand() % 600);
+		int y = 200 + (rand() % 300);
+		point p = { x, y };
+		wolfList[wolfCount] = new Wolf(this, p, 50, 50, "images\\wolf.JPEG");
+		wolfCount++;
+	}
+}
 

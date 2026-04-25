@@ -521,7 +521,6 @@ Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : 
 	iconsImages[ICON_GOAT] = "images\\goat.JPEG";
 	iconsImages[ICON_SHEEP] = "images\\sheep.JPEG";
 	iconsImages[ICON_WATER] = "images\\water.JPEG";
-	iconsImages[ICON_WOLF] = "images\\wolf.JPEG";
 
 	point p;
 	p.x = 0;
@@ -544,8 +543,7 @@ Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : 
 
 	iconsList[ICON_WATER] = new WaterIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_WATER]);
 	p.x += config.iconWidth;
-	iconsList[ICON_WOLF] = new WolfIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_WOLF]);
-	p.x += config.iconWidth;
+	
 	//p.x += config.iconWidth;
 	//iconsList[ICON_CHICK] = new ChickIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_CHICK]);
 }
@@ -593,7 +591,7 @@ void Budgetbar::updateAnimals()
 	((GoatIcon*)iconsList[ICON_GOAT])->updateAnimals();
 	((SheepIcon*)iconsList[ICON_SHEEP])->updateAnimals();
 	((WaterIcon*)iconsList[ICON_WATER])->updateAnimals();
-	((WolfIcon*)iconsList[ICON_WOLF])->updateAnimals();
+
 }
 
 void Budgetbar::resetAnimals()
@@ -603,7 +601,6 @@ void Budgetbar::resetAnimals()
 	((GoatIcon*)iconsList[ICON_GOAT])->resetAnimals();
 	((SheepIcon*)iconsList[ICON_SHEEP])->resetAnimals();
 	((WaterIcon*)iconsList[ICON_WATER])->resetAnimals();
-	((WolfIcon*)iconsList[ICON_WOLF])->resetAnimals();
 }
 
 int Budgetbar::getAnimalCount() const
@@ -611,6 +608,5 @@ int Budgetbar::getAnimalCount() const
 	return ((ChickIcon*)iconsList[ICON_CHICK])->count +
 		((CowIcon*)iconsList[ICON_COW])->count +
 		((GoatIcon*)iconsList[ICON_GOAT])->count +
-		((SheepIcon*)iconsList[ICON_SHEEP])->count +
-		((WolfIcon*)iconsList[ICON_WOLF])->count;
+		((SheepIcon*)iconsList[ICON_SHEEP])->count;
 }
