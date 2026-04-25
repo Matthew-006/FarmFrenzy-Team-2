@@ -17,6 +17,8 @@ private:
 	Egg* eggList[kMaxProducts];
 	Milk* milkList[kMaxProducts];
 	Wool* woolList[kMaxProducts];
+	Wolf* wolfList[kMaxProducts];
+	int wolfCount;
 	int eggCount;
 	int milkCount;
 	int woolCount;
@@ -28,9 +30,6 @@ private:
 	int animals;
 	void DrawProducts() const;
 	void clearProducts();
-	void drawWarehouseInventory(int left, int top, int right, int bottom) const;
-	bool isProductAreaFree(const point& location, int width, int height) const;
-	bool findFreeProductSpot(point& location, int width, int height) const;
 
 public:
 	static constexpr int kStartingBudget = 2000;

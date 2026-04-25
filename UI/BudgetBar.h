@@ -115,7 +115,6 @@ enum ANIMAL_ICONS //The icons of the toolbar (you should add more icons)
 	ICON_GOAT,
 	ICON_SHEEP,
 	ICON_WATER,
-	ICON_WOLF,
 
 
 	//TODO: Add more icons names here
