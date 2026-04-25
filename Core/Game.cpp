@@ -78,6 +78,8 @@ Game::~Game()
 		delete woolList[i];
 	}
 
+	clearWolves();
+
 	delete gameToolbar;
 	delete gameBudgetbar;
 	delete pWind;
@@ -366,6 +368,17 @@ void Game::clearProducts()
 	woolCount = 0;
 }
 
+void Game::clearWolves()
+{
+	for (int i = 0; i < wolfCount; i++)
+	{
+		delete wolfList[i];
+		wolfList[i] = nullptr;
+	}
+
+	wolfCount = 0;
+}
+
 bool Game::isProductAreaFree(const point& location, int width, int height) const
 {
 	const int fieldLeft = config.fieldPadding;
@@ -444,6 +457,7 @@ void Game::updateTimer()
 void Game::restartGame()
 {
 	clearProducts();
+	clearWolves();
 	budget = kStartingBudget;
 	isPaused = false;
 	timer = 60;

@@ -30,6 +30,11 @@ private:
 	int animals;
 	void DrawProducts() const;
 	void clearProducts();
+	void clearWolves();
+	void drawWarehouseInventory(int left, int top, int right, int bottom) const;
+	bool isProductAreaFree(const point& location, int width, int height) const;
+	bool findFreeProductSpot(point& location, int width, int height) const;
+	void showRandomWolf();
 
 public:
 	static constexpr int kStartingBudget = 2000;
