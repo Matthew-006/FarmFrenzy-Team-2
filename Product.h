@@ -6,6 +6,7 @@ class Product : public Drawable
 {
 protected:
 	std::string image_path;
+	image sprite;
 
 public:
 	Product(Game* r_pGame, point r_point, int r_width, int r_height, std::string img_path);

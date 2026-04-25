@@ -14,6 +14,7 @@ protected:
 
 private:
 	string image_path;
+	image sprite;
 	int dx, dy;
 	int changeCounter;
 	unsigned long lastProductTick;

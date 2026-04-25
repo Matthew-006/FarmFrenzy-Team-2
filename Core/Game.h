@@ -8,6 +8,9 @@ class Game
 {
 private:
 	static constexpr int kMaxProducts = 50;
+	static constexpr int kEggPrice = 15;
+	static constexpr int kMilkPrice = 25;
+	static constexpr int kWoolPrice = 20;
 	window* pWind;	//Pointer to the CMU graphics window
 	Toolbar* gameToolbar;
 	Budgetbar* gameBudgetbar;
@@ -25,6 +28,9 @@ private:
 	int animals;
 	void DrawProducts() const;
 	void clearProducts();
+	void drawWarehouseInventory(int left, int top, int right, int bottom) const;
+	bool isProductAreaFree(const point& location, int width, int height) const;
+	bool findFreeProductSpot(point& location, int width, int height) const;
 
 public:
 	static constexpr int kStartingBudget = 2000;

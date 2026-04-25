@@ -21,6 +21,7 @@ private:
 	//string image_path;
 public:
 	string image_path;
+	image iconImage;
 	BudgetbarIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
 	virtual void draw() const override;
 	virtual void onClick() = 0;   //The action that should be taken when this icon is clicked
@@ -78,6 +79,7 @@ class WaterIcon : public BudgetbarIcon
 {
 public:
 	Water** waterList; //an array of Chick pointers
+	image grassImage;
 	point grassTiles[max_budget_items][grass_tiles_per_water];
 	int grassTileCounts[max_budget_items];
 	int count = 0;
