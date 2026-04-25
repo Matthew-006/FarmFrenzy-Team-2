@@ -82,12 +82,15 @@ public:
 	image grassImage;
 	point grassTiles[max_budget_items][grass_tiles_per_water];
 	int grassTileCounts[max_budget_items];
+	unsigned long grassLastDecayTick[max_budget_items];
 	int count = 0;
 	WaterIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
 	~WaterIcon();
 	virtual void onClick();
 	void updateAnimals();
 	void resetAnimals();
+	void drawFoodCounter() const;
+	bool animalsNearGrass(int index) const;
 };
 
 class WolfIcon : public BudgetbarIcon
@@ -138,6 +141,11 @@ public:
 	void updateAnimals();
 	void resetAnimals();
 	int getAnimalCount() const;
+	ChickIcon* getChickIcon() const;
+	CowIcon* getCowIcon() const;
+	GoatIcon* getGoatIcon() const;
+	SheepIcon* getSheepIcon() const;
+	WaterIcon* getWaterIcon() const;
 
 };
 

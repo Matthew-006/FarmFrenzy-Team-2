@@ -1,17 +1,52 @@
 #include "Budgetbar.h"
 #include "../Config/GameConfig.h"
 #include "../Core/Game.h"
+#include <cmath>
 #include <iostream>
 using namespace std;
 
 namespace
 {
+	const int feeding_area_center_x = 170;
+	const int feeding_area_center_y = (2 * config.toolBarHeight) + 145;
+	const int feeding_area_radius = 95;
+	const int grass_tile_size = 28;
+	const int grass_consume_distance = 42;
+	const unsigned long grass_consume_delay_ms = 650;
+
 	bool isInsideFieldTile(const point& p, int tileSize)
 	{
 		return p.x >= 0 &&
 			p.y >= 2 * config.toolBarHeight &&
 			p.x <= config.windWidth - tileSize &&
 			p.y <= config.windHeight - config.statusBarHeight - tileSize;
+	}
+
+	bool isInsideFeedingArea(const point& p, int tileSize)
+	{
+		const int centerX = p.x + (tileSize / 2);
+		const int centerY = p.y + (tileSize / 2);
+		const int dx = centerX - feeding_area_center_x;
+		const int dy = centerY - feeding_area_center_y;
+		const int radius = feeding_area_radius - (tileSize / 2);
+		return (dx * dx) + (dy * dy) <= (radius * radius);
+	}
+
+	bool isAnimalNearPoint(const Animal* animal, const point& p, int threshold)
+	{
+		if (animal == nullptr)
+		{
+			return false;
+		}
+
+		point animalPoint = animal->getRefPoint();
+		const int animalCenterX = animalPoint.x + 25;
+		const int animalCenterY = animalPoint.y + 25;
+		const int grassCenterX = p.x + (grass_tile_size / 2);
+		const int grassCenterY = p.y + (grass_tile_size / 2);
+		const int dx = animalCenterX - grassCenterX;
+		const int dy = animalCenterY - grassCenterY;
+		return (dx * dx) + (dy * dy) <= (threshold * threshold);
 	}
 
 	bool canBuyItem(Game* game, int currentCount)
@@ -23,6 +58,24 @@ namespace
 		}
 		
 		return true;
+	}
+
+	void drawGrassTile(window* pWind, const point& p)
+	{
+		pWind->SetPen(color(56, 122, 48), 1);
+		pWind->SetBrush(color(88, 176, 74));
+		pWind->DrawCircle(p.x + 10, p.y + 12, 7);
+		pWind->DrawCircle(p.x + 17, p.y + 10, 8);
+		pWind->DrawCircle(p.x + 13, p.y + 18, 7);
+	}
+
+	void drawWaterPatch(window* pWind, const point& p)
+	{
+		pWind->SetPen(color(38, 108, 176), 2);
+		pWind->SetBrush(color(101, 185, 234));
+		pWind->DrawCircle(p.x + 18, p.y + 18, 15);
+		pWind->SetBrush(color(163, 220, 248));
+		pWind->DrawCircle(p.x + 13, p.y + 13, 5);
 	}
 }
 
@@ -346,10 +399,10 @@ void SheepIcon::resetAnimals()
 WaterIcon::WaterIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : BudgetbarIcon(r_pGame, r_point, r_width, r_height, img_path)
 {
 	waterList = new Water * [max_budget_items];
-	grassImage.Open("images\\grass.jpeg");
 	for (int i = 0; i < max_budget_items; i++) {
 		waterList[i] = nullptr;
 		grassTileCounts[i] = 0;
+		grassLastDecayTick[i] = 0;
 	}
 }
 
@@ -373,28 +426,29 @@ void WaterIcon::onClick()
 	if (canBuyItem(pGame, count) && pGame->spendBudget(animal_cost)) {
 
 		point p;
-		std::random_device rd1;
-		std::mt19937 gen1(rd1());
-		std::uniform_int_distribution<int> dist1(range_min_x + 50, range_max_x - 50);
-		p.x = dist1(gen1);
-		std::random_device rd2;
-		std::mt19937 gen2(rd2());
-		std::uniform_int_distribution<int> dist2(range_min_y + 50, range_max_y - 50);
-		p.y = dist2(gen2);
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<int> angleDist(0, 359);
+		std::uniform_int_distribution<int> radiusDist(0, feeding_area_radius - 18);
 
-		const int tileSize = 50;
+		double angle = angleDist(gen) * 3.14159265358979323846 / 180.0;
+		int radius = radiusDist(gen);
+		p.x = feeding_area_center_x + static_cast<int>(radius * cos(angle)) - 25;
+		p.y = feeding_area_center_y + static_cast<int>(radius * sin(angle)) - 25;
+
 		const int offsets[grass_tiles_per_water][2] =
 		{
-			{-tileSize, -tileSize}, {0, -tileSize}, {tileSize, -tileSize},
-			{-tileSize, 0},                            {tileSize, 0},
-			{-tileSize, tileSize},  {0, tileSize},   {tileSize, tileSize}
+			{0, 0},
+			{-grass_tile_size, 0}, {grass_tile_size, 0},
+			{0, -grass_tile_size}, {0, grass_tile_size},
+			{-20, -20}, {20, -20}, {0, 20}
 		};
 
 		grassTileCounts[count] = 0;
 		for (int i = 0; i < grass_tiles_per_water; i++)
 		{
 			point grassPoint{ p.x + offsets[i][0], p.y + offsets[i][1] };
-			if (isInsideFieldTile(grassPoint, tileSize))
+			if (isInsideFieldTile(grassPoint, grass_tile_size) && isInsideFeedingArea(grassPoint, grass_tile_size))
 			{
 				grassTiles[count][grassTileCounts[count]] = grassPoint;
 				grassTileCounts[count]++;
@@ -404,11 +458,12 @@ void WaterIcon::onClick()
 		window* pWind = pGame->getWind();
 		for (int i = 0; i < grassTileCounts[count]; i++)
 		{
-			pWind->DrawImage(grassImage, grassTiles[count][i].x, grassTiles[count][i].y, tileSize, tileSize);
+			drawGrassTile(pWind, grassTiles[count][i]);
 		}
 
 		waterList[count] = new Water(pGame, p, 50, 50, image_path);
-		waterList[count]->draw();
+		grassLastDecayTick[count] = GetTickCount();
+		drawWaterPatch(pWind, p);
 		count++;
 	}
 }
@@ -416,19 +471,35 @@ void WaterIcon::onClick()
 void WaterIcon::updateAnimals()
 {
 	window* pWind = pGame->getWind();
+	unsigned long currentTick = GetTickCount();
 
 	for (int i = 0; i < count; i++)
 	{
 		if (waterList[i] != nullptr)
 		{
-			for (int j = 0; j < grassTileCounts[i]; j++)
+			if (grassTileCounts[i] > 0 && animalsNearGrass(i) && currentTick - grassLastDecayTick[i] >= grass_consume_delay_ms)
 			{
-				pWind->DrawImage(grassImage, grassTiles[i][j].x, grassTiles[i][j].y, 50, 50);
+				grassTileCounts[i]--;
+				grassLastDecayTick[i] = currentTick;
 			}
 
-			waterList[i]->draw();
+			if (grassTileCounts[i] <= 0)
+			{
+				delete waterList[i];
+				waterList[i] = nullptr;
+				continue;
+			}
+
+			for (int j = 0; j < grassTileCounts[i]; j++)
+			{
+				drawGrassTile(pWind, grassTiles[i][j]);
+			}
+
+			drawWaterPatch(pWind, waterList[i]->getRefPoint());
 		}
 	}
+
+	drawFoodCounter();
 }
 
 void WaterIcon::resetAnimals()
@@ -438,8 +509,74 @@ void WaterIcon::resetAnimals()
 		delete waterList[i];
 		waterList[i] = nullptr;
 		grassTileCounts[i] = 0;
+		grassLastDecayTick[i] = 0;
 	}
 	count = 0;
+}
+
+void WaterIcon::drawFoodCounter() const
+{
+	int totalGrass = 0;
+	for (int i = 0; i < count; i++)
+	{
+		if (waterList[i] != nullptr)
+		{
+			totalGrass += grassTileCounts[i];
+		}
+	}
+
+	window* pWind = pGame->getWind();
+	pWind->SetPen(BLACK, 1);
+	pWind->SetFont(16, BOLD, BY_NAME, "Arial");
+	pWind->DrawString(52, (2 * config.toolBarHeight) + config.fieldPadding - 8, "Food: " + to_string(totalGrass));
+}
+
+bool WaterIcon::animalsNearGrass(int index) const
+{
+	Budgetbar* budgetbar = pGame->getBudgetbar();
+	ChickIcon* chickIcon = budgetbar->getChickIcon();
+	CowIcon* cowIcon = budgetbar->getCowIcon();
+	GoatIcon* goatIcon = budgetbar->getGoatIcon();
+	SheepIcon* sheepIcon = budgetbar->getSheepIcon();
+
+	for (int j = 0; j < grassTileCounts[index]; j++)
+	{
+		const point& grassPoint = grassTiles[index][j];
+
+		for (int i = 0; i < chickIcon->count; i++)
+		{
+			if (isAnimalNearPoint(chickIcon->chickList[i], grassPoint, grass_consume_distance))
+			{
+				return true;
+			}
+		}
+
+		for (int i = 0; i < cowIcon->count; i++)
+		{
+			if (isAnimalNearPoint(cowIcon->cowList[i], grassPoint, grass_consume_distance))
+			{
+				return true;
+			}
+		}
+
+		for (int i = 0; i < goatIcon->count; i++)
+		{
+			if (isAnimalNearPoint(goatIcon->goatList[i], grassPoint, grass_consume_distance))
+			{
+				return true;
+			}
+		}
+
+		for (int i = 0; i < sheepIcon->count; i++)
+		{
+			if (isAnimalNearPoint(sheepIcon->sheepList[i], grassPoint, grass_consume_distance))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 WolfIcon::WolfIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : BudgetbarIcon(r_pGame, r_point, r_width, r_height, img_path)
@@ -614,4 +751,29 @@ int Budgetbar::getAnimalCount() const
 		((CowIcon*)iconsList[ICON_COW])->count +
 		((GoatIcon*)iconsList[ICON_GOAT])->count +
 		((SheepIcon*)iconsList[ICON_SHEEP])->count;
+}
+
+ChickIcon* Budgetbar::getChickIcon() const
+{
+	return (ChickIcon*)iconsList[ICON_CHICK];
+}
+
+CowIcon* Budgetbar::getCowIcon() const
+{
+	return (CowIcon*)iconsList[ICON_COW];
+}
+
+GoatIcon* Budgetbar::getGoatIcon() const
+{
+	return (GoatIcon*)iconsList[ICON_GOAT];
+}
+
+SheepIcon* Budgetbar::getSheepIcon() const
+{
+	return (SheepIcon*)iconsList[ICON_SHEEP];
+}
+
+WaterIcon* Budgetbar::getWaterIcon() const
+{
+	return (WaterIcon*)iconsList[ICON_WATER];
 }

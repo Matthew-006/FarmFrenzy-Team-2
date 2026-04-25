@@ -1,8 +1,16 @@
 #include "Game.h"
 #include "../Config/GameConfig.h"
+#include "../UI/Toolbar.h"
+#include "../UI/BudgetBar.h"
+#include "../Product.h"
+#include "../Entities/Animal.h"
 
 namespace
 {
+	const int kFeedingAreaCenterX = 170;
+	const int kFeedingAreaCenterY = (2 * config.toolBarHeight) + 145;
+	const int kFeedingAreaRadius = 95;
+
 	bool rectanglesOverlap(const point& firstPoint, int firstWidth, int firstHeight, const point& secondPoint, int secondWidth, int secondHeight)
 	{
 		return firstPoint.x < secondPoint.x + secondWidth &&
@@ -21,6 +29,9 @@ Game::Game()
 	eggCount = 0;
 	milkCount = 0;
 	woolCount = 0;
+	warehouseEgg = 0;
+	warehouseMilk = 0;
+	warehouseWool = 0;
 	for (int i = 0; i < kMaxProducts; i++)
 	{
 		eggList[i] = nullptr;
@@ -91,9 +102,9 @@ clicktype Game::getMouseClick(int& x, int& y) const
 
 }
 
-string Game::getSrting() const
+std::string Game::getSrting() const
 {
-	string Label;
+	std::string Label;
 	char Key;
 	keytype ktype;
 	pWind->FlushKeyQueue();
@@ -229,15 +240,15 @@ void Game::drawWarehouseInventory(int left, int top, int right, int bottom) cons
 
 	pWind->SetFont(13, PLAIN, BY_NAME, "Arial");
 	pWind->DrawString(itemX, row1Y, "Eggs");
-	pWind->DrawString(countX, row1Y, "0");
+	pWind->DrawString(countX, row1Y, to_string(warehouseEgg));
 	pWind->DrawString(priceX, row1Y, to_string(kEggPrice) + "$");
 
 	pWind->DrawString(itemX, row1Y + rowGap, "Milk");
-	pWind->DrawString(countX, row1Y + rowGap, "0");
+	pWind->DrawString(countX, row1Y + rowGap, to_string(warehouseMilk));
 	pWind->DrawString(priceX, row1Y + rowGap, to_string(kMilkPrice) + "$");
 
 	pWind->DrawString(itemX, row1Y + (2 * rowGap), "Wool");
-	pWind->DrawString(countX, row1Y + (2 * rowGap), "0");
+	pWind->DrawString(countX, row1Y + (2 * rowGap), to_string(warehouseWool));
 	pWind->DrawString(priceX, row1Y + (2 * rowGap), to_string(kWoolPrice) + "$");
 }
 
@@ -247,6 +258,10 @@ void Game::drawFoodArea() const
 	drawWarehouse();
 
 	const int fieldTop = (2 * config.toolBarHeight) + config.fieldPadding;
+	pWind->SetPen(color(102, 150, 78), 3);
+	pWind->SetBrush(color(192, 230, 150));
+	pWind->DrawCircle(kFeedingAreaCenterX, kFeedingAreaCenterY, kFeedingAreaRadius);
+
 	pWind->SetPen(DARKGREEN, 2);
 	pWind->SetFont(20, BOLD, BY_NAME, "Arial");
 	pWind->DrawString(25, fieldTop + 10, "Feeding Area");
@@ -261,7 +276,7 @@ void Game::clearBudget() const
 	pWind->DrawRectangle(config.windWidth - 500, config.toolBarHeight, config.windWidth, 2*config.toolBarHeight);
 }
 
-void Game::printBudget(string msg) const
+void Game::printBudget(std::string msg) const
 {
 	clearBudget();	//First clear the status bar
 
@@ -292,7 +307,7 @@ void Game::clearStatusBar() const
 	pWind->DrawRectangle(0, config.windHeight - config.statusBarHeight, config.windWidth, config.windHeight);
 }
 
-void Game::printMessage(string msg) const
+void Game::printMessage(std::string msg) const
 {
 	clearStatusBar();	//First clear the status bar
 
@@ -306,7 +321,7 @@ void Game::updateStatusBar() const
 {
 	clearStatusBar();
 
-	string msg = "Timer: " + to_string(timer) +
+	std::string msg = "Timer: " + to_string(timer) +
 		" | Goal: " + to_string(goal) +
 		" | Level: " + to_string(level) +
 		" | Animals: " + to_string(animals);
@@ -454,6 +469,51 @@ void Game::updateTimer()
 	}
 }
 
+void Game::handleProductClick(int x, int y)
+{
+	for (int i = 0; i < eggCount; i++)
+	{
+		if (eggList[i] != nullptr && eggList[i]->isClicked(x, y))
+		{
+			warehouseEgg++;
+			delete eggList[i];
+			eggList[i] = eggList[eggCount - 1];
+			eggList[eggCount - 1] = nullptr;
+			eggCount--;
+			printMessage("Egg in warehouse: " + to_string(warehouseEgg));
+			return;
+		}
+	}
+
+	for (int i = 0; i < milkCount; i++)
+	{
+		if (milkList[i] != nullptr && milkList[i]->isClicked(x, y))
+		{
+			warehouseMilk++;
+			delete milkList[i];
+			milkList[i] = milkList[milkCount - 1];
+			milkList[milkCount - 1] = nullptr;
+			milkCount--;
+			printMessage("Milk in warehouse: " + to_string(warehouseMilk));
+			return;
+		}
+	}
+
+	for (int i = 0; i < woolCount; i++)
+	{
+		if (woolList[i] != nullptr && woolList[i]->isClicked(x, y))
+		{
+			warehouseWool++;
+			delete woolList[i];
+			woolList[i] = woolList[woolCount - 1];
+			woolList[woolCount - 1] = nullptr;
+			woolCount--;
+			printMessage("Wool in warehouse: " + to_string(warehouseWool));
+			return;
+		}
+	}
+}
+
 void Game::restartGame()
 {
 	clearProducts();
@@ -464,6 +524,9 @@ void Game::restartGame()
 	level = 1;
 	goal = 5;
 	animals = 0;
+	warehouseEgg = 0;
+	warehouseMilk = 0;
+	warehouseWool = 0;
 	lastTime = GetTickCount();
 	gameBudgetbar->resetAnimals();
 	pWind->SetPen(config.bkGrndColor, 1);
@@ -556,6 +619,11 @@ window* Game::getWind() const
 	return pWind;
 }
 
+Budgetbar* Game::getBudgetbar() const
+{
+	return gameBudgetbar;
+}
+
 void Game::go()
 {
 	int x = 0, y = 0;
@@ -609,6 +677,10 @@ void Game::go()
 			else if (y >= config.toolBarHeight && y < 2 * config.toolBarHeight)
 			{
 				isExit = gameBudgetbar->handleClick(x, y);
+			}
+			else if (y >= 2 * config.toolBarHeight)
+			{
+				handleProductClick(x, y);
 			}
 
 			while (pWind->GetButtonState(LEFT_BUTTON, x, y))

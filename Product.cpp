@@ -17,6 +17,12 @@ void Product::draw() const
 	pWind->DrawImage(sprite, RefPoint.x, RefPoint.y, width, height);
 }
 
+bool Product::isClicked(int x, int y) const
+{
+	return x >= RefPoint.x && x <= RefPoint.x + width &&
+		y >= RefPoint.y && y <= RefPoint.y + height;
+}
+
 Egg::Egg(Game* r_pGame, point r_point)
 	: Product(r_pGame, r_point, 30, 30, "images\\egg.jpg")
 {

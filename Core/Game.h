@@ -1,8 +1,14 @@
 #pragma once
 #include "../CMUgraphicsLib/CMUgraphics.h"
-#include "../UI/Toolbar.h"
-#include "../UI/BudgetBar.h"
-#include "../Product.h"
+#include "Drawable.h"
+#include <string>
+
+class Toolbar;
+class Budgetbar;
+class Egg;
+class Milk;
+class Wool;
+class Wolf;
 
 class Game
 {
@@ -22,6 +28,9 @@ private:
 	int eggCount;
 	int milkCount;
 	int woolCount;
+	int warehouseEgg;
+	int warehouseMilk;
+	int warehouseWool;
 	bool isPaused;
 	unsigned long lastTime;
 	int timer;
@@ -34,6 +43,7 @@ private:
 	void drawWarehouseInventory(int left, int top, int right, int bottom) const;
 	bool isProductAreaFree(const point& location, int width, int height) const;
 	bool findFreeProductSpot(point& location, int width, int height) const;
+	void handleProductClick(int x, int y);
 	void showRandomWolf();
 
 public:
@@ -43,7 +53,7 @@ public:
 	~Game();
 
 	clicktype getMouseClick(int& x, int& y) const; //Get coordinate where user clicks and returns click type (left/right)
-	string getSrting() const;	 //Returns a string entered by the user
+	std::string getSrting() const;	 //Returns a string entered by the user
 
 
 	window* CreateWind(int, int, int, int) const; //creates the game window
@@ -53,7 +63,7 @@ public:
 	void drawWarehouse() const;
 	void drawFoodArea() const;
 	void clearBudget() const;
-	void printBudget(string msg) const;
+	void printBudget(std::string msg) const;
 	bool spendBudget(int amount);
 	void clearStatusBar() const;	//Clears the status bar
 	void updateTimer();
@@ -68,10 +78,11 @@ public:
 	bool addWool(point location);
 
 
-	void printMessage(string msg) const;	//Print a message on Status bar
+	void printMessage(std::string msg) const;	//Print a message on Status bar
 
 	void go();
 
 	window* getWind() const;		//returns a pointer to the graphics window
+	Budgetbar* getBudgetbar() const;
 };
 

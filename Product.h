@@ -11,6 +11,7 @@ protected:
 public:
 	Product(Game* r_pGame, point r_point, int r_width, int r_height, std::string img_path);
 	virtual void draw() const override;
+	bool isClicked(int x, int y) const;
 };
 
 class Egg : public Product
