@@ -702,4 +702,3 @@ void Game::showRandomWolf() {
 	}
 }
 //khadega
-//kerolos
