@@ -702,4 +702,4 @@ void Game::showRandomWolf() {
 		wolfCount++;
 	}
 }
-
+//khadega
