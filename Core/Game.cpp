@@ -694,8 +694,9 @@ void Game::showRandomWolf() {
 	int showChance = 30 + (level * 5);
 
 	if (wolfCount < kMaxProducts && (rand() % 10000) < showChance) {
-		int x = 100 + (rand() % 600);
-		int y = 200 + (rand() % 300);
+		int x = config.fieldPadding + (rand() % (config.windWidth - 2 * config.fieldPadding));
+		int usableHeight = config.playingAreaHeight - 2 * config.fieldPadding; 
+		int y = (config.toolBarHeight + config.fieldPadding) + (rand() % usableHeight);
 		point p = { x, y };
 		wolfList[wolfCount] = new Wolf(this, p, 50, 50, "images\\wolf.JPEG");
 		wolfCount++;
