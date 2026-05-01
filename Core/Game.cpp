@@ -471,6 +471,29 @@ void Game::updateTimer()
 
 void Game::handleProductClick(int x, int y)
 {
+	for (int i = 0; i < wolfCount; i++)
+	{
+		if (wolfList[i] != nullptr)
+		{
+			point p = wolfList[i]->getRefPoint();
+			if (x >= p.x && x <= p.x + 50 && y >= p.y && y <= p.y + 50)
+			{
+				if (wolfList[i]->clicked())
+				{
+					delete wolfList[i];
+					wolfList[i] = wolfList[wolfCount - 1];
+					wolfList[wolfCount - 1] = nullptr;
+					wolfCount--;
+					printMessage("Wolf got disappeared");
+				}
+				else
+				{
+					printMessage("Keep clicking");
+				}
+				return;
+			}
+		}
+	}
 	for (int i = 0; i < eggCount; i++)
 	{
 		if (eggList[i] != nullptr && eggList[i]->isClicked(x, y))

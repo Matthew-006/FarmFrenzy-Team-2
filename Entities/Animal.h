@@ -58,9 +58,15 @@ public:
 
 class Wolf : public Animal
 {
+private:
+	int disapclicks;
 public:
 	Wolf(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
 	virtual void moveStep();
+	bool clicked() {
+		disapclicks--;
+		return (disapclicks <= 0);
+	}
 };
 
 class Goat : public Animal
