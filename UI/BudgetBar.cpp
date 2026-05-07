@@ -538,6 +538,7 @@ bool WaterIcon::animalsNearGrass(int index) const
 	CowIcon* cowIcon = budgetbar->getCowIcon();
 	GoatIcon* goatIcon = budgetbar->getGoatIcon();
 	SheepIcon* sheepIcon = budgetbar->getSheepIcon();
+	DuckIcon* duckIcon = budgetbar->getDuckIcon();
 
 	for (int j = 0; j < grassTileCounts[index]; j++)
 	{
@@ -570,6 +571,13 @@ bool WaterIcon::animalsNearGrass(int index) const
 		for (int i = 0; i < sheepIcon->count; i++)
 		{
 			if (isAnimalNearPoint(sheepIcon->sheepList[i], grassPoint, grass_consume_distance))
+			{
+				return true;
+			}
+		}
+		for (int i = 0; i < duckIcon->count; i++)
+		{
+			if (isAnimalNearPoint(duckIcon->duckList[i], grassPoint, grass_consume_distance))
 			{
 				return true;
 			}
@@ -654,6 +662,81 @@ void WolfIcon::resetAnimals()
 	count = 0;
 }
 
+DuckIcon::DuckIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : BudgetbarIcon(r_pGame, r_point, r_width, r_height, img_path)
+{
+	duckList = new Duck * [max_budget_items];
+	for (int i = 0; i < max_budget_items; i++) {
+		duckList[i] = nullptr;
+	}
+}
+
+DuckIcon::~DuckIcon()
+{
+	resetAnimals();
+	delete[] duckList;
+}
+
+void DuckIcon::onClick()
+{
+	//TO DO: add code for cleanup and game exit here
+	/*
+	//draw image of this object in the field
+	window* pWind = pGame->getWind();
+	pWind->DrawImage(image_path, RefPoint.x, RefPoint.y, width, height);
+	*/
+
+	//Chick* new_chick = new Chick(pGame, RefPoint, 30, 30, "images\\Chick.png");
+	cout << "Icon Duck Clicked" << endl;
+	if (canBuyItem(pGame, count) && pGame->spendBudget(animal_cost)) {
+
+		point p;
+		// 1. Obtain a seed from a non-deterministic source (if available)
+		std::random_device rd1;
+
+		// 2. Seed the Mersenne Twister engine
+		// std::mt19937 is a high-quality pseudo-random number generator
+		std::mt19937 gen1(rd1());
+		std::uniform_int_distribution<int> dist1(range_min_x, range_max_x);
+		p.x = dist1(gen1);
+		//std::cout << "P.X = " << p.x << endl;
+		// 1. Obtain a seed from a non-deterministic source (if available)
+		std::random_device rd2;
+
+		// 2. Seed the Mersenne Twister engine
+		// std::mt19937 is a high-quality pseudo-random number generator
+		std::mt19937 gen2(rd2());
+		std::uniform_int_distribution<int> dist2(range_min_y, range_max_y);
+		p.y = dist2(gen2);
+		//std::cout << "P.Y = " << p.y << endl;
+		//p.x = 300;
+		//p.y = 300;
+		duckList[count] = new Duck(pGame, p, 50, 50, image_path);
+		duckList[count]->draw();
+		count++;
+		//window* pWind = pGame->getWind();
+		//pWind->DrawImage(image_path, RefPoint.x, RefPoint.y, width, height);
+	}
+}
+
+void DuckIcon::updateAnimals()
+{
+	for (int i = 0; i < count; i++)
+	{
+		if (duckList[i] != nullptr)
+			duckList[i]->moveStep();
+	}
+}
+
+void DuckIcon::resetAnimals()
+{
+	for (int i = 0; i < count; i++)
+	{
+		delete duckList[i];
+		duckList[i] = nullptr;
+	}
+	count = 0;
+}
+
 Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	//First prepare List of images for each icon
@@ -663,6 +746,7 @@ Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : 
 	iconsImages[ICON_GOAT] = "images\\goat.JPEG";
 	iconsImages[ICON_SHEEP] = "images\\sheep.JPEG";
 	iconsImages[ICON_WATER] = "images\\water.JPEG";
+	iconsImages[ICON_DUCK] = "images\\duck.jpg";
 
 	point p;
 	p.x = 0;
@@ -686,6 +770,8 @@ Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : 
 	iconsList[ICON_WATER] = new WaterIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_WATER]);
 	p.x += config.iconWidth;
 	
+	iconsList[ICON_DUCK] = new DuckIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_DUCK]);
+	p.x += config.iconWidth;
 	//p.x += config.iconWidth;
 	//iconsList[ICON_CHICK] = new ChickIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_CHICK]);
 }
@@ -733,6 +819,7 @@ void Budgetbar::updateAnimals()
 	((GoatIcon*)iconsList[ICON_GOAT])->updateAnimals();
 	((SheepIcon*)iconsList[ICON_SHEEP])->updateAnimals();
 	((WaterIcon*)iconsList[ICON_WATER])->updateAnimals();
+	((DuckIcon*)iconsList[ICON_DUCK])->updateAnimals();
 
 }
 
@@ -743,6 +830,7 @@ void Budgetbar::resetAnimals()
 	((GoatIcon*)iconsList[ICON_GOAT])->resetAnimals();
 	((SheepIcon*)iconsList[ICON_SHEEP])->resetAnimals();
 	((WaterIcon*)iconsList[ICON_WATER])->resetAnimals();
+	((DuckIcon*)iconsList[ICON_DUCK])->resetAnimals();
 }
 
 int Budgetbar::getAnimalCount() const
@@ -750,8 +838,10 @@ int Budgetbar::getAnimalCount() const
 	return ((ChickIcon*)iconsList[ICON_CHICK])->count +
 		((CowIcon*)iconsList[ICON_COW])->count +
 		((GoatIcon*)iconsList[ICON_GOAT])->count +
-		((SheepIcon*)iconsList[ICON_SHEEP])->count;
+		((SheepIcon*)iconsList[ICON_SHEEP])->count+
+		((DuckIcon*)iconsList[ICON_DUCK])->count;
 }
+
 
 ChickIcon* Budgetbar::getChickIcon() const
 {
@@ -776,4 +866,8 @@ SheepIcon* Budgetbar::getSheepIcon() const
 WaterIcon* Budgetbar::getWaterIcon() const
 {
 	return (WaterIcon*)iconsList[ICON_WATER];
+}
+DuckIcon* Budgetbar::getDuckIcon() const
+{
+	return (DuckIcon*)iconsList[ICON_DUCK];
 }

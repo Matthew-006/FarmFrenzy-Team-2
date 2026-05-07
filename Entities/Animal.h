@@ -91,4 +91,10 @@ public:
 	Water(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
 	virtual void moveStep();
 };
+class Duck : public Animal
+{
+public:
+	Duck(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
+	virtual void moveStep();
+};
 

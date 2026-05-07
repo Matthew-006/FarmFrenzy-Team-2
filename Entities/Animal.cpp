@@ -364,4 +364,49 @@ void Water::moveStep()
 	draw();
 
 }
+Duck::Duck(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
+{
+
+}
+
+void Duck::moveStep()
+{
+	setChangeCounter(getChangeCounter() + 1);
+
+	if (getChangeCounter() % 20 == 0)
+	{
+		setDx((rand() % 7) - 3);
+		setDy((rand() % 7) - 3);
+	}
+
+	RefPoint.x += getDx();
+	RefPoint.y += getDy();
+
+	if (RefPoint.x < 0)
+	{
+		RefPoint.x = 0;
+		setDx(-getDx());
+	}
+
+	if (RefPoint.y < 2 * config.toolBarHeight)
+	{
+		RefPoint.y = 2 * config.toolBarHeight;
+		setDy(-getDy());
+	}
+
+	if (RefPoint.x > config.windWidth - width)
+	{
+		RefPoint.x = config.windWidth - width;
+		setDx(-getDx());
+	}
+
+	if (RefPoint.y > config.windHeight - config.statusBarHeight - height)
+	{
+		RefPoint.y = config.windHeight - config.statusBarHeight - height;
+		setDy(-getDy());
+	}
+
+	draw();
+	drawCounter();
+}
 

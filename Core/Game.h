@@ -9,6 +9,7 @@ class Egg;
 class Milk;
 class Wool;
 class Wolf;
+class duck;
 
 class Game
 {

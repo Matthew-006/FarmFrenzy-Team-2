@@ -105,6 +105,17 @@ public:
 	void resetAnimals();
 };
 
+class DuckIcon : public BudgetbarIcon
+{
+public:
+	Duck** duckList; // an array of Duck pointers
+	int count = 0;
+	DuckIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
+	~DuckIcon();
+	virtual void onClick();
+	void updateAnimals();
+	void resetAnimals();
+};
 
 
 // TO DO: The rest of icons in the toolbar
@@ -118,7 +129,7 @@ enum ANIMAL_ICONS //The icons of the toolbar (you should add more icons)
 	ICON_GOAT,
 	ICON_SHEEP,
 	ICON_WATER,
-
+	ICON_DUCK,
 
 	//TODO: Add more icons names here
 
@@ -146,6 +157,7 @@ public:
 	GoatIcon* getGoatIcon() const;
 	SheepIcon* getSheepIcon() const;
 	WaterIcon* getWaterIcon() const;
+	DuckIcon* getDuckIcon() const;
 
 };
 
