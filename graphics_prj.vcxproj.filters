@@ -10,14 +10,14 @@
     <Filter Include="Core">
       <UniqueIdentifier>{9b8ef68b-7fb8-49a4-842b-7fec9b4d5bba}</UniqueIdentifier>
     </Filter>
-    <Filter Include="UI">
-      <UniqueIdentifier>{020b675f-5c8e-43a0-bcf0-aeca61c047d7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Entities">
       <UniqueIdentifier>{22e1c58e-2fcc-4f37-8395-10d027402c71}</UniqueIdentifier>
     </Filter>
     <Filter Include="Config">
       <UniqueIdentifier>{9cddb5f6-ab38-47b3-8eb8-3b4e5a24bf16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entities\UI">
+      <UniqueIdentifier>{020b675f-5c8e-43a0-bcf0-aeca61c047d7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -138,10 +138,10 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="UI\BudgetBar.cpp">
-      <Filter>UI</Filter>
+      <Filter>Entities\UI</Filter>
     </ClCompile>
     <ClCompile Include="UI\Toolbar.cpp">
-      <Filter>UI</Filter>
+      <Filter>Entities\UI</Filter>
     </ClCompile>
     <ClCompile Include="Entities\Animal.cpp">
       <Filter>Entities</Filter>
@@ -218,10 +218,10 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="UI\BudgetBar.h">
-      <Filter>UI</Filter>
+      <Filter>Entities\UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\Toolbar.h">
-      <Filter>UI</Filter>
+      <Filter>Entities\UI</Filter>
     </ClInclude>
     <ClInclude Include="Entities\Animal.h">
       <Filter>Entities</Filter>

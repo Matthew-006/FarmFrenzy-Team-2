@@ -641,7 +641,10 @@ window* Game::getWind() const
 {
 	return pWind;
 }
-
+int Game::getLevel() const
+{
+	return level;
+}
 Budgetbar* Game::getBudgetbar() const
 {
 	return gameBudgetbar;

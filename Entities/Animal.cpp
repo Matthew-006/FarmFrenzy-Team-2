@@ -214,8 +214,10 @@ void Wolf::moveStep()
 
 	if (getChangeCounter() % 20 == 0)
 	{
-		setDx((rand() % 7) - 3);
-		setDy((rand() % 7) - 3);
+		int level = pGame->getLevel();
+		int speedRange = (level / 2) + 2;
+		setDx((rand() % (speedRange * 2 + 1)) - speedRange);
+		setDy((rand() % (speedRange * 2 + 1)) - speedRange);
 	}
 
 	RefPoint.x += getDx();

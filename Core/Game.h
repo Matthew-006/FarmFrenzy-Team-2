@@ -76,6 +76,7 @@ public:
 	bool addEgg(point location);
 	bool addMilk(point location);
 	bool addWool(point location);
+	int getLevel() const;
 
 
 	void printMessage(std::string msg) const;	//Print a message on Status bar
