@@ -4,12 +4,17 @@
 #include "../UI/BudgetBar.h"
 #include "../Product.h"
 #include "../Entities/Animal.h"
+#include <algorithm>
+#include <fstream>
+#include <sstream>
 
 namespace
 {
 	const int kFeedingAreaCenterX = 170;
 	const int kFeedingAreaCenterY = (2 * config.toolBarHeight) + 145;
 	const int kFeedingAreaRadius = 95;
+	const char* kQuitUserName = "__QUIT__";
+	const char* kLeaderboardFileName = "leaderboard.txt";
 
 	bool rectanglesOverlap(const point& firstPoint, int firstWidth, int firstHeight, const point& secondPoint, int secondWidth, int secondHeight)
 	{
@@ -17,6 +22,22 @@ namespace
 			firstPoint.x + firstWidth > secondPoint.x &&
 			firstPoint.y < secondPoint.y + secondHeight &&
 			firstPoint.y + firstHeight > secondPoint.y;
+	}
+
+	bool compareScoresDescending(const std::pair<std::string, int>& first, const std::pair<std::string, int>& second)
+	{
+		return first.second > second.second;
+	}
+
+	void sanitizeLeaderboardName(std::string& name)
+	{
+		for (size_t i = 0; i < name.size(); i++)
+		{
+			if (name[i] == ',')
+			{
+				name[i] = '_';
+			}
+		}
 	}
 }
 
@@ -45,11 +66,18 @@ Game::Game()
 	level = 1;
 	goal = 5;
 	animals = 0;
+	username = "Player";
+	exitRequested = false;
 	lastTime = GetTickCount();
 
 	//1 - Create the main window
 	pWind = CreateWind(config.windWidth, config.windHeight, config.wx, config.wy);
 	pWind->SetBuffering(true);
+	promptForUsername();
+
+	pWind->SetPen(config.bkGrndColor, 1);
+	pWind->SetBrush(config.bkGrndColor);
+	pWind->DrawRectangle(0, 0, config.windWidth, config.windHeight);
 
 	//2 - create and draw the toolbar
 	createToolbar();
@@ -123,6 +151,7 @@ std::string Game::getSrting() const
 		else
 			Label += Key;
 		printMessage(Label);
+		pWind->UpdateBuffer();
 	}
 }
 
@@ -321,7 +350,9 @@ void Game::updateStatusBar() const
 {
 	clearStatusBar();
 
-	std::string msg = "Timer: " + to_string(timer) +
+	std::string msg = "Player: " + username +
+		" | Timer: " + to_string(timer) +
+		" | Score: " + to_string(calculateScore()) +
 		" | Goal: " + to_string(goal) +
 		" | Level: " + to_string(level) +
 		" | Animals: " + to_string(animals);
@@ -329,6 +360,379 @@ void Game::updateStatusBar() const
 	pWind->SetPen(config.penColor, 50);
 	pWind->SetFont(24, BOLD, BY_NAME, "Arial");
 	pWind->DrawString(10, config.windHeight - (int)(0.85 * config.statusBarHeight), msg);
+}
+
+void Game::promptForUsername()
+{
+	std::string enteredName = getUsernameFromStartScreen();
+	if (enteredName == kQuitUserName)
+	{
+		exitRequested = true;
+		return;
+	}
+
+	if (enteredName.empty())
+	{
+		enteredName = "Player";
+	}
+	sanitizeLeaderboardName(enteredName);
+
+	exitRequested = false;
+	username = enteredName;
+	drawStartScreen(username);
+	pWind->SetFont(24, BOLD, BY_NAME, "Arial");
+	pWind->SetPen(color(19, 84, 45), 1);
+	pWind->DrawString(430, 398, "Welcome, " + username + "!");
+	pWind->UpdateBuffer();
+	Sleep(700);
+}
+
+void Game::drawStartScreen(const std::string& typedName, bool isGameOver, int lastScore) const
+{
+	pWind->SetPen(color(111, 178, 230), 1);
+	pWind->SetBrush(color(111, 178, 230));
+	pWind->DrawRectangle(0, 0, config.windWidth, config.windHeight);
+
+	pWind->SetPen(color(255, 205, 80), 1);
+	pWind->SetBrush(color(255, 220, 95));
+	pWind->DrawCircle(1015, 95, 54);
+
+	pWind->SetPen(color(68, 145, 61), 1);
+	pWind->SetBrush(color(96, 181, 82));
+	pWind->DrawRectangle(0, 335, config.windWidth, config.windHeight);
+
+	pWind->SetPen(color(74, 133, 58), 3);
+	for (int x = 0; x < config.windWidth; x += 60)
+	{
+		pWind->DrawLine(x, 600, x + 190, 335);
+	}
+
+	pWind->SetPen(BLACK, 3);
+	pWind->SetBrush(color(194, 91, 62));
+	pWind->DrawRectangle(112, 265, 300, 405);
+	int roofX[3] = { 90, 206, 322 };
+	int roofY[3] = { 265, 180, 265 };
+	pWind->SetBrush(color(130, 48, 39));
+	pWind->DrawPolygon(roofX, roofY, 3);
+	pWind->SetBrush(color(99, 64, 42));
+	pWind->DrawRectangle(172, 325, 240, 405);
+	pWind->SetBrush(color(245, 222, 150));
+	pWind->DrawRectangle(130, 288, 174, 326);
+	pWind->DrawRectangle(238, 288, 282, 326);
+
+	pWind->SetPen(color(37, 92, 48), 1);
+	pWind->SetFont(58, BOLD, BY_NAME, "Arial");
+	pWind->DrawString(360, 62, "FARM FRENZY");
+
+	pWind->SetFont(22, BOLD, BY_NAME, "Arial");
+	if (isGameOver)
+	{
+		pWind->SetPen(color(128, 40, 34), 1);
+		pWind->SetFont(38, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(448, 126, "GAME OVER");
+		pWind->SetPen(BLACK, 1);
+		pWind->SetFont(21, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(400, 180, username + "'s score: " + to_string(lastScore));
+	}
+	else
+	{
+		pWind->DrawString(405, 138, "Build your farm. Collect products. Beat the board.");
+	}
+
+	if (isGameOver)
+	{
+		pWind->SetPen(color(42, 105, 55), 3);
+		pWind->SetBrush(color(248, 239, 214));
+		pWind->DrawRectangle(365, 235, 790, 382, FILLED, 16, 16);
+
+		pWind->SetPen(color(37, 92, 48), 1);
+		pWind->SetFont(24, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(448, 260, "Score Saved");
+
+		pWind->SetPen(BLACK, 1);
+		pWind->SetFont(19, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(420, 305, "Player: " + username);
+		pWind->DrawString(420, 335, "Final Score: " + to_string(lastScore));
+	}
+	else
+	{
+		pWind->SetPen(color(42, 105, 55), 3);
+		pWind->SetBrush(color(248, 239, 214));
+		pWind->DrawRectangle(365, 225, 790, 392, FILLED, 16, 16);
+
+		pWind->SetPen(color(37, 92, 48), 1);
+		pWind->SetFont(24, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(438, 250, "Enter your username");
+
+		pWind->SetPen(color(120, 86, 54), 3);
+		pWind->SetBrush(WHITE);
+		pWind->DrawRectangle(410, 298, 745, 345, FILLED, 8, 8);
+
+		pWind->SetPen(BLACK, 1);
+		pWind->SetFont(23, BOLD, BY_NAME, "Arial");
+		if (typedName.empty())
+		{
+			pWind->SetPen(color(120, 120, 120), 1);
+			pWind->DrawString(430, 310, "Player name");
+		}
+		else
+		{
+			pWind->DrawString(430, 310, typedName);
+		}
+
+		pWind->SetPen(color(37, 92, 48), 1);
+		pWind->SetFont(16, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(470, 358, "Press Enter to start");
+	}
+
+	std::vector<std::pair<std::string, int>> leaderboard = loadLeaderboard();
+	std::sort(leaderboard.begin(), leaderboard.end(), compareScoresDescending);
+	drawStartLeaderboard(860, 170, leaderboard);
+
+	if (isGameOver)
+	{
+		pWind->SetPen(color(37, 92, 48), 3);
+		pWind->SetBrush(color(255, 238, 170));
+		pWind->DrawRectangle(310, 430, 500, 482, FILLED, 12, 12);
+		pWind->SetBrush(color(235, 250, 230));
+		pWind->DrawRectangle(520, 430, 750, 482, FILLED, 12, 12);
+		pWind->SetBrush(color(245, 214, 205));
+		pWind->DrawRectangle(475, 500, 585, 548, FILLED, 12, 12);
+
+		pWind->SetPen(BLACK, 1);
+		pWind->SetFont(18, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(358, 447, "Play Again");
+		pWind->DrawString(547, 447, "Different User");
+		pWind->DrawString(508, 515, "Quit");
+	}
+	else
+	{
+		pWind->SetPen(color(128, 40, 34), 3);
+		pWind->SetBrush(color(245, 214, 205));
+		pWind->DrawRectangle(505, 445, 650, 497, FILLED, 12, 12);
+
+		pWind->SetPen(BLACK, 1);
+		pWind->SetFont(18, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(553, 462, "Quit");
+	}
+}
+
+void Game::drawStartLeaderboard(int left, int top, const std::vector<std::pair<std::string, int>>& leaderboard) const
+{
+	pWind->SetPen(color(76, 95, 58), 3);
+	pWind->SetBrush(color(248, 239, 214));
+	pWind->DrawRectangle(left, top, left + 285, top + 315, FILLED, 10, 10);
+
+	pWind->SetPen(color(37, 92, 48), 1);
+	pWind->SetFont(24, BOLD, BY_NAME, "Arial");
+	pWind->DrawString(left + 62, top + 18, "Leaderboard");
+
+	pWind->SetFont(14, BOLD, BY_NAME, "Arial");
+	pWind->SetPen(BLACK, 1);
+	pWind->DrawString(left + 20, top + 65, "Rank");
+	pWind->DrawString(left + 80, top + 65, "Player");
+	pWind->DrawString(left + 210, top + 65, "Best");
+
+	pWind->SetPen(color(111, 75, 42), 2);
+	pWind->DrawLine(left + 15, top + 88, left + 270, top + 88);
+
+	int rowsToDraw = static_cast<int>(leaderboard.size());
+	if (rowsToDraw > 8)
+	{
+		rowsToDraw = 8;
+	}
+
+	if (rowsToDraw == 0)
+	{
+		pWind->SetFont(15, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(left + 62, top + 145, "No scores yet");
+		return;
+	}
+
+	for (int i = 0; i < rowsToDraw; i++)
+	{
+		std::string nameText = leaderboard[i].first;
+		if (nameText.size() > 13)
+		{
+			nameText = nameText.substr(0, 13);
+		}
+
+		const int rowY = top + 108 + (i * 25);
+		pWind->SetFont(14, PLAIN, BY_NAME, "Arial");
+		if (leaderboard[i].first == username)
+		{
+			pWind->SetPen(color(26, 109, 57), 1);
+			pWind->SetFont(14, BOLD, BY_NAME, "Arial");
+		}
+		else
+		{
+			pWind->SetPen(BLACK, 1);
+		}
+
+		pWind->DrawString(left + 30, rowY, to_string(i + 1));
+		pWind->DrawString(left + 80, rowY, nameText);
+		pWind->DrawString(left + 215, rowY, to_string(leaderboard[i].second));
+	}
+}
+
+std::string Game::getUsernameFromStartScreen() const
+{
+	std::string typedName;
+	char key;
+	keytype keyType;
+	int x = 0;
+	int y = 0;
+
+	pWind->FlushKeyQueue();
+	pWind->FlushMouseQueue();
+	drawStartScreen(typedName);
+	pWind->UpdateBuffer();
+
+	while (true)
+	{
+		if (pWind->GetButtonState(LEFT_BUTTON, x, y))
+		{
+			if (x >= 505 && x <= 650 && y >= 445 && y <= 497)
+			{
+				while (pWind->GetButtonState(LEFT_BUTTON, x, y))
+				{
+					Sleep(10);
+				}
+				return kQuitUserName;
+			}
+
+			while (pWind->GetButtonState(LEFT_BUTTON, x, y))
+			{
+				Sleep(10);
+			}
+		}
+
+		keyType = pWind->GetKeyPress(key);
+		if (keyType != NO_KEYPRESS)
+		{
+			if (keyType == ESCAPE)
+			{
+				return "";
+			}
+			if (key == 13)
+			{
+				return typedName;
+			}
+			if (key == 8)
+			{
+				if (!typedName.empty())
+				{
+					typedName.resize(typedName.size() - 1);
+				}
+			}
+			else if (key >= 32 && key <= 126 && typedName.size() < 18)
+			{
+				typedName += key;
+			}
+
+			drawStartScreen(typedName);
+			pWind->UpdateBuffer();
+		}
+
+		Sleep(20);
+	}
+}
+
+int Game::calculateScore() const
+{
+	return (warehouseEgg * kEggPrice) + (warehouseMilk * kMilkPrice) + (warehouseWool * kWoolPrice);
+}
+
+std::vector<std::pair<std::string, int>> Game::loadLeaderboard() const
+{
+	std::vector<std::pair<std::string, int>> leaderboard;
+	std::ifstream input(kLeaderboardFileName);
+	std::string line;
+
+	while (std::getline(input, line))
+	{
+		std::stringstream parser(line);
+		std::string name;
+		int score = 0;
+
+		if (std::getline(parser, name, ',') && parser >> score && !name.empty())
+		{
+			leaderboard.push_back(std::make_pair(name, score));
+		}
+	}
+
+	return leaderboard;
+}
+
+void Game::saveLeaderboard(const std::vector<std::pair<std::string, int>>& leaderboard) const
+{
+	std::ofstream output(kLeaderboardFileName);
+	for (size_t i = 0; i < leaderboard.size(); i++)
+	{
+		output << leaderboard[i].first << "," << leaderboard[i].second << std::endl;
+	}
+}
+
+void Game::updateLeaderboard(int score)
+{
+	std::vector<std::pair<std::string, int>> leaderboard = loadLeaderboard();
+	bool foundUser = false;
+
+	for (size_t i = 0; i < leaderboard.size(); i++)
+	{
+		if (leaderboard[i].first == username)
+		{
+			if (score > leaderboard[i].second)
+			{
+				leaderboard[i].second = score;
+			}
+			foundUser = true;
+			break;
+		}
+	}
+
+	if (!foundUser)
+	{
+		leaderboard.push_back(std::make_pair(username, score));
+	}
+
+	std::sort(leaderboard.begin(), leaderboard.end(), compareScoresDescending);
+	saveLeaderboard(leaderboard);
+}
+
+Game::GameOverChoice Game::handleGameOver()
+{
+	int score = calculateScore();
+	updateLeaderboard(score);
+	drawStartScreen(username, true, score);
+	pWind->UpdateBuffer();
+
+	int x = 0;
+	int y = 0;
+	pWind->FlushMouseQueue();
+	while (pWind->GetButtonState(LEFT_BUTTON, x, y))
+	{
+		Sleep(10);
+	}
+
+	while (pWind->IsOpen())
+	{
+		pWind->WaitMouseClick(x, y);
+		if (x >= 310 && x <= 500 && y >= 430 && y <= 482)
+		{
+			return PLAY_AGAIN;
+		}
+		if (x >= 520 && x <= 750 && y >= 430 && y <= 482)
+		{
+			return DIFFERENT_USER;
+		}
+		if (x >= 475 && x <= 585 && y >= 500 && y <= 548)
+		{
+			return EXIT_GAME;
+		}
+	}
+
+	return EXIT_GAME;
 }
 
 void Game::DrawProducts() const
@@ -539,6 +943,21 @@ void Game::handleProductClick(int x, int y)
 
 void Game::restartGame()
 {
+	resetGameState();
+	pWind->SetPen(config.bkGrndColor, 1);
+	pWind->SetBrush(config.bkGrndColor);
+	pWind->DrawRectangle(0, 0, config.windWidth, config.windHeight);
+	gameToolbar->draw();
+	gameBudgetbar->draw();
+	drawFieldBackground();
+	drawWarehouse();
+	clearStatusBar();
+	printBudget("BUDGET = $" + to_string(budget));
+	printMessage("Game restarted for " + username);
+}
+
+void Game::resetGameState()
+{
 	clearProducts();
 	clearWolves();
 	budget = kStartingBudget;
@@ -552,16 +971,6 @@ void Game::restartGame()
 	warehouseWool = 0;
 	lastTime = GetTickCount();
 	gameBudgetbar->resetAnimals();
-	pWind->SetPen(config.bkGrndColor, 1);
-	pWind->SetBrush(config.bkGrndColor);
-	pWind->DrawRectangle(0, 0, config.windWidth, config.windHeight);
-	gameToolbar->draw();
-	gameBudgetbar->draw();
-	drawFieldBackground();
-	drawWarehouse();
-	clearStatusBar();
-	printBudget("BUDGET = $" + to_string(budget));
-	printMessage("Game restarted");
 }
 
 void Game::pauseGame()
@@ -656,6 +1065,10 @@ void Game::go()
 	bool isExit = false;
 
 	pWind->ChangeTitle("- - - - - - - - - - Farm Frenzy (CIE101-project) - - - - - - - - - -");
+	if (exitRequested)
+	{
+		return;
+	}
 
 	do
 	{
@@ -671,9 +1084,27 @@ void Game::go()
 			updateTimer();
 			if (timer <= 0)
 			{
-				printMessage("Game Over!");
-				pWind->UpdateBuffer();
-				isExit = true;
+				GameOverChoice choice = handleGameOver();
+				if (choice == PLAY_AGAIN)
+				{
+					restartGame();
+				}
+				else if (choice == DIFFERENT_USER)
+				{
+					promptForUsername();
+					if (exitRequested)
+					{
+						isExit = true;
+					}
+					else
+					{
+						restartGame();
+					}
+				}
+				else
+				{
+					isExit = true;
+				}
 				continue;
 			}
 
@@ -712,6 +1143,29 @@ void Game::go()
 			while (pWind->GetButtonState(LEFT_BUTTON, x, y))
 			{
 				Sleep(10);
+			}
+
+			if (isExit && pWind->IsOpen())
+			{
+				GameOverChoice choice = handleGameOver();
+				if (choice == PLAY_AGAIN)
+				{
+					restartGame();
+					isExit = false;
+				}
+				else if (choice == DIFFERENT_USER)
+				{
+					promptForUsername();
+					if (exitRequested)
+					{
+						isExit = true;
+					}
+					else
+					{
+						restartGame();
+						isExit = false;
+					}
+				}
 			}
 		}
 	} while (!isExit && pWind->IsOpen());

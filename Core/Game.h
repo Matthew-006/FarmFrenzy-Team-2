@@ -2,6 +2,8 @@
 #include "../CMUgraphicsLib/CMUgraphics.h"
 #include "Drawable.h"
 #include <string>
+#include <utility>
+#include <vector>
 
 class Toolbar;
 class Budgetbar;
@@ -14,6 +16,13 @@ class duck;
 class Game
 {
 private:
+	enum GameOverChoice
+	{
+		PLAY_AGAIN,
+		DIFFERENT_USER,
+		EXIT_GAME
+	};
+
 	static constexpr int kMaxProducts = 50;
 	static constexpr int kEggPrice = 15;
 	static constexpr int kMilkPrice = 25;
@@ -38,6 +47,8 @@ private:
 	int level;
 	int goal;
 	int animals;
+	std::string username;
+	bool exitRequested;
 	void DrawProducts() const;
 	void clearProducts();
 	void clearWolves();
@@ -46,6 +57,16 @@ private:
 	bool findFreeProductSpot(point& location, int width, int height) const;
 	void handleProductClick(int x, int y);
 	void showRandomWolf();
+	void promptForUsername();
+	void drawStartScreen(const std::string& typedName, bool isGameOver = false, int lastScore = 0) const;
+	void drawStartLeaderboard(int left, int top, const std::vector<std::pair<std::string, int>>& leaderboard) const;
+	std::string getUsernameFromStartScreen() const;
+	int calculateScore() const;
+	GameOverChoice handleGameOver();
+	std::vector<std::pair<std::string, int>> loadLeaderboard() const;
+	void saveLeaderboard(const std::vector<std::pair<std::string, int>>& leaderboard) const;
+	void updateLeaderboard(int score);
+	void resetGameState();
 
 public:
 	static constexpr int kStartingBudget = 2000;
