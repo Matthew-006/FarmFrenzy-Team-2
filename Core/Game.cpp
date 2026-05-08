@@ -39,6 +39,44 @@ namespace
 			}
 		}
 	}
+
+	void getWarehouseInventoryBounds(int& left, int& top, int& right, int& bottom)
+	{
+		const int fieldBottom = config.windHeight - config.statusBarHeight;
+		const int warehouseWidth = config.warehouseWidth;
+		const int warehouseHeight = config.warehouseHeight + 120;
+		const int warehouseLeft = config.windWidth - warehouseWidth - 35;
+		const int warehouseRight = warehouseLeft + warehouseWidth;
+		const int warehouseBottom = fieldBottom - 25;
+		const int warehouseTop = warehouseBottom - warehouseHeight;
+		const int windowLeft = warehouseLeft + 14;
+		const int windowRight = warehouseRight - 14;
+		const int windowTop = warehouseTop + 52;
+		const int windowBottom = warehouseBottom - 96;
+
+		left = windowLeft + 10;
+		top = windowTop + 10;
+		right = windowRight - 10;
+		bottom = windowBottom - 10;
+	}
+
+	void drawSellButton(window* pWind, int left, int top, bool enabled)
+	{
+		pWind->SetPen(enabled ? color(42, 104, 56) : color(116, 116, 116), 1);
+		pWind->SetBrush(enabled ? color(96, 186, 101) : color(205, 205, 205));
+		pWind->DrawRectangle(left, top, left + 31, top + 17, FILLED, 4, 4);
+		pWind->SetPen(BLACK, 1);
+		pWind->SetFont(10, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(left + 4, top + 3, "Sell");
+	}
+
+	bool isInsideSellButton(int x, int y, int left, int rowY)
+	{
+		const int sellButtonLeft = left + 109;
+		const int sellButtonTop = rowY - 2;
+		return x >= sellButtonLeft && x <= sellButtonLeft + 31 &&
+			y >= sellButtonTop && y <= sellButtonTop + 17;
+	}
 }
 
 Game::Game()
@@ -247,8 +285,9 @@ void Game::drawWarehouse() const
 void Game::drawWarehouseInventory(int left, int top, int right, int bottom) const
 {
 	const int itemX = left + 12;
-	const int countX = left + 62;
-	const int priceX = left + 104;
+	const int countX = left + 50;
+	const int priceX = left + 81;
+	const int sellX = left + 111;
 	const int row1Y = top + 34;
 	const int rowGap = 28;
 
@@ -258,27 +297,32 @@ void Game::drawWarehouseInventory(int left, int top, int right, int bottom) cons
 
 	pWind->SetPen(color(147, 106, 68), 1);
 	pWind->DrawLine(left, top + 26, right, top + 26);
-	pWind->DrawLine(countX - 12, top + 2, countX - 12, bottom - 2);
-	pWind->DrawLine(priceX - 12, top + 2, priceX - 12, bottom - 2);
+	pWind->DrawLine(countX - 8, top + 2, countX - 8, bottom - 2);
+	pWind->DrawLine(priceX - 8, top + 2, priceX - 8, bottom - 2);
+	pWind->DrawLine(sellX - 4, top + 2, sellX - 4, bottom - 2);
 
 	pWind->SetPen(BLACK, 1);
-	pWind->SetFont(13, BOLD, BY_NAME, "Arial");
+	pWind->SetFont(11, BOLD, BY_NAME, "Arial");
 	pWind->DrawString(itemX, top + 7, "Item");
 	pWind->DrawString(countX, top + 7, "Count");
 	pWind->DrawString(priceX, top + 7, "Price");
+	pWind->DrawString(sellX, top + 7, "Sell");
 
-	pWind->SetFont(13, PLAIN, BY_NAME, "Arial");
+	pWind->SetFont(12, PLAIN, BY_NAME, "Arial");
 	pWind->DrawString(itemX, row1Y, "Eggs");
 	pWind->DrawString(countX, row1Y, to_string(warehouseEgg));
 	pWind->DrawString(priceX, row1Y, to_string(kEggPrice) + "$");
+	drawSellButton(pWind, left + 109, row1Y - 2, warehouseEgg > 0);
 
 	pWind->DrawString(itemX, row1Y + rowGap, "Milk");
 	pWind->DrawString(countX, row1Y + rowGap, to_string(warehouseMilk));
 	pWind->DrawString(priceX, row1Y + rowGap, to_string(kMilkPrice) + "$");
+	drawSellButton(pWind, left + 109, row1Y + rowGap - 2, warehouseMilk > 0);
 
 	pWind->DrawString(itemX, row1Y + (2 * rowGap), "Wool");
 	pWind->DrawString(countX, row1Y + (2 * rowGap), to_string(warehouseWool));
 	pWind->DrawString(priceX, row1Y + (2 * rowGap), to_string(kWoolPrice) + "$");
+	drawSellButton(pWind, left + 109, row1Y + (2 * rowGap) - 2, warehouseWool > 0);
 }
 
 void Game::drawFoodArea() const
@@ -941,6 +985,54 @@ void Game::handleProductClick(int x, int y)
 	}
 }
 
+bool Game::handleWarehouseClick(int x, int y)
+{
+	int left, top, right, bottom;
+	getWarehouseInventoryBounds(left, top, right, bottom);
+
+	if (x < left || x > right || y < top || y > bottom)
+	{
+		return false;
+	}
+
+	const int row1Y = top + 34;
+	const int rowGap = 28;
+	if (isInsideSellButton(x, y, left, row1Y))
+	{
+		sellWarehouseProduct(warehouseEgg, kEggPrice, "Egg");
+		return true;
+	}
+
+	if (isInsideSellButton(x, y, left, row1Y + rowGap))
+	{
+		sellWarehouseProduct(warehouseMilk, kMilkPrice, "Milk");
+		return true;
+	}
+
+	if (isInsideSellButton(x, y, left, row1Y + (2 * rowGap)))
+	{
+		sellWarehouseProduct(warehouseWool, kWoolPrice, "Wool");
+		return true;
+	}
+
+	return false;
+}
+
+void Game::sellWarehouseProduct(int& productCount, int price, const std::string& productName)
+{
+	if (productCount <= 0)
+	{
+		printMessage("No " + productName + " to sell");
+		return;
+	}
+
+	productCount--;
+	budget += price;
+	printBudget("BUDGET = $" + to_string(budget));
+	drawWarehouse();
+	printMessage(productName + " sold for $" + to_string(price));
+}
+
 void Game::restartGame()
 {
 	resetGameState();
@@ -1137,7 +1229,10 @@ void Game::go()
 			}
 			else if (y >= 2 * config.toolBarHeight)
 			{
-				handleProductClick(x, y);
+				if (!handleWarehouseClick(x, y))
+				{
+					handleProductClick(x, y);
+				}
 			}
 
 			while (pWind->GetButtonState(LEFT_BUTTON, x, y))

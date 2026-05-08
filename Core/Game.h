@@ -56,6 +56,8 @@ private:
 	bool isProductAreaFree(const point& location, int width, int height) const;
 	bool findFreeProductSpot(point& location, int width, int height) const;
 	void handleProductClick(int x, int y);
+	bool handleWarehouseClick(int x, int y);
+	void sellWarehouseProduct(int& productCount, int price, const std::string& productName);
 	void showRandomWolf();
 	void promptForUsername();
 	void drawStartScreen(const std::string& typedName, bool isGameOver = false, int lastScore = 0) const;
