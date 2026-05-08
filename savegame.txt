@@ -1,0 +1,35 @@
+FarmFrenzySave 1
+Username
+kerolos
+Budget 1720
+Paused 0
+Timer 26
+Level 1
+Goal 5
+Animals 2
+Warehouse 0 0 1
+Products
+Eggs 0
+Milk 0
+Wool 1
+513 231
+AnimalsOnField
+Chicks 0
+Cows 0
+Goats 0
+Sheep 1
+500 199 2 3 254
+Ducks 1
+1065 464 -3 2 265
+Wolves 1
+644 150 -2 2 5
+Water 1
+131 226 8
+131 226
+103 226
+159 226
+131 198
+131 254
+111 206
+151 206
+131 246

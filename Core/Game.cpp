@@ -15,6 +15,7 @@ namespace
 	const int kFeedingAreaRadius = 95;
 	const char* kQuitUserName = "__QUIT__";
 	const char* kLeaderboardFileName = "leaderboard.txt";
+	const char* kSaveGameFileName = "savegame.txt";
 
 	bool rectanglesOverlap(const point& firstPoint, int firstWidth, int firstHeight, const point& secondPoint, int secondWidth, int secondHeight)
 	{
@@ -76,6 +77,36 @@ namespace
 		const int sellButtonTop = rowY - 2;
 		return x >= sellButtonLeft && x <= sellButtonLeft + 31 &&
 			y >= sellButtonTop && y <= sellButtonTop + 17;
+	}
+
+	template <typename ProductType>
+	void writeProductList(std::ofstream& output, const std::string& label, ProductType* const* list, int count)
+	{
+		output << label << " " << count << std::endl;
+		for (int i = 0; i < count; i++)
+		{
+			if (list[i] != nullptr)
+			{
+				point p = list[i]->getRefPoint();
+				output << p.x << " " << p.y << std::endl;
+			}
+		}
+	}
+
+	template <typename AnimalType>
+	void writeAnimalList(std::ofstream& output, const std::string& label, AnimalType* const* list, int count)
+	{
+		output << label << " " << count << std::endl;
+		for (int i = 0; i < count; i++)
+		{
+			if (list[i] != nullptr)
+			{
+				point p = list[i]->getRefPoint();
+				output << p.x << " " << p.y << " "
+					<< list[i]->getDx() << " " << list[i]->getDy() << " "
+					<< list[i]->getChangeCounter() << std::endl;
+			}
+		}
 	}
 }
 
@@ -1079,7 +1110,64 @@ void Game::resumeGame()
 
 void Game::saveGame() const
 {
-	printMessage("Save is ready to be connected to file logic");
+	std::ofstream output(kSaveGameFileName);
+	if (!output)
+	{
+		printMessage("Could not save game");
+		return;
+	}
+
+	output << "FarmFrenzySave 1" << std::endl;
+	output << "Username" << std::endl;
+	output << username << std::endl;
+	output << "Budget " << budget << std::endl;
+	output << "Paused " << (isPaused ? 1 : 0) << std::endl;
+	output << "Timer " << timer << std::endl;
+	output << "Level " << level << std::endl;
+	output << "Goal " << goal << std::endl;
+	output << "Animals " << animals << std::endl;
+	output << "Warehouse " << warehouseEgg << " " << warehouseMilk << " " << warehouseWool << std::endl;
+	output << "Products" << std::endl;
+	writeProductList(output, "Eggs", eggList, eggCount);
+	writeProductList(output, "Milk", milkList, milkCount);
+	writeProductList(output, "Wool", woolList, woolCount);
+	output << "AnimalsOnField" << std::endl;
+
+	ChickIcon* chickIcon = gameBudgetbar->getChickIcon();
+	CowIcon* cowIcon = gameBudgetbar->getCowIcon();
+	GoatIcon* goatIcon = gameBudgetbar->getGoatIcon();
+	SheepIcon* sheepIcon = gameBudgetbar->getSheepIcon();
+	DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
+	WaterIcon* waterIcon = gameBudgetbar->getWaterIcon();
+
+	writeAnimalList(output, "Chicks", chickIcon->chickList, chickIcon->count);
+	writeAnimalList(output, "Cows", cowIcon->cowList, cowIcon->count);
+	writeAnimalList(output, "Goats", goatIcon->goatList, goatIcon->count);
+	writeAnimalList(output, "Sheep", sheepIcon->sheepList, sheepIcon->count);
+	writeAnimalList(output, "Ducks", duckIcon->duckList, duckIcon->count);
+	writeAnimalList(output, "Wolves", wolfList, wolfCount);
+
+	output << "Water " << waterIcon->count << std::endl;
+	for (int i = 0; i < waterIcon->count; i++)
+	{
+		if (waterIcon->waterList[i] != nullptr)
+		{
+			point p = waterIcon->waterList[i]->getRefPoint();
+			output << p.x << " " << p.y << " " << waterIcon->grassTileCounts[i] << std::endl;
+			for (int j = 0; j < waterIcon->grassTileCounts[i]; j++)
+			{
+				output << waterIcon->grassTiles[i][j].x << " " << waterIcon->grassTiles[i][j].y << std::endl;
+			}
+		}
+	}
+
+	if (!output)
+	{
+		printMessage("Could not finish saving game");
+		return;
+	}
+
+	printMessage("Game saved to savegame.txt");
 }
 
 void Game::loadGame()
