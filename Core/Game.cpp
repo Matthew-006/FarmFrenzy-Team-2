@@ -1512,12 +1512,80 @@ void Game::go()
 			for (int i = 0; i < wolfCount; i++) {
 				if (wolfList[i] != nullptr) {
 					wolfList[i]->moveStep();
+					DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
+					for (int j = 0; j < duckIcon->count; j++) {
+						if (duckIcon->duckList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, duckIcon->duckList[j]->getRefPoint(), 50, 50))
+						{
+							delete duckIcon->duckList[j];
+							duckIcon->duckList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your duck !");
+						}
+					}
+					ChickIcon* chikIcon = gameBudgetbar->getChickIcon();
+					for (int j = 0; j < chikIcon->count; j++) {
+						if (chikIcon->chickList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, chikIcon->chickList[j]->getRefPoint(), 50, 50))
+						{
+							delete chikIcon->chickList[j];
+							chikIcon->chickList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your chicken !");
+
+						}
+					}
+
+					SheepIcon* sheepIcon = gameBudgetbar->getSheepIcon();
+					for (int j = 0; j < sheepIcon->count; j++) {
+						if (sheepIcon->sheepList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, sheepIcon->sheepList[j]->getRefPoint(), 50, 50))
+						{
+							delete sheepIcon->sheepList[j];
+							sheepIcon->sheepList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your sheep !");
+						}
+					}
+					CowIcon* cowIcon = gameBudgetbar->getCowIcon();
+					for (int j = 0; j < cowIcon->count; j++) {
+						if (cowIcon->cowList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, cowIcon->cowList[j]->getRefPoint(), 50, 50))
+						{
+							delete cowIcon->cowList[j];
+							cowIcon->cowList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your cow !");
+						}
+					}
+					GoatIcon* goatIcon = gameBudgetbar->getGoatIcon();
+					for (int j = 0; j < goatIcon->count; j++) {
+						if (goatIcon->goatList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, goatIcon->goatList[j]->getRefPoint(), 50, 50))
+						{
+							delete goatIcon->goatList[j];
+							goatIcon->goatList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your goat !");
+						}
+					}
 				}
 			}
 			gameBudgetbar->updateAnimals();
 			animals = gameBudgetbar->getAnimalCount();
 			updateStatusBar();
 		}
+
 
 		pWind->UpdateBuffer();
 
