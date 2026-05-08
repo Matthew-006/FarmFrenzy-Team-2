@@ -6,6 +6,7 @@
 #include "../Entities/Animal.h"
 #include <algorithm>
 #include <fstream>
+#include <limits>
 #include <sstream>
 
 namespace
@@ -107,6 +108,75 @@ namespace
 					<< list[i]->getChangeCounter() << std::endl;
 			}
 		}
+	}
+
+	bool readExpectedLabel(std::ifstream& input, const std::string& expected)
+	{
+		std::string label;
+		input >> label;
+		return input && label == expected;
+	}
+
+	template <typename ProductType>
+	bool readProductList(std::ifstream& input, const std::string& label, ProductType** list, int& count, int maxCount, Game* game)
+	{
+		if (!readExpectedLabel(input, label))
+		{
+			return false;
+		}
+
+		input >> count;
+		if (!input || count < 0 || count > maxCount)
+		{
+			return false;
+		}
+
+		for (int i = 0; i < count; i++)
+		{
+			point p;
+			input >> p.x >> p.y;
+			if (!input)
+			{
+				return false;
+			}
+
+			list[i] = new ProductType(game, p);
+		}
+
+		return true;
+	}
+
+	template <typename AnimalType>
+	bool readAnimalList(std::ifstream& input, const std::string& label, AnimalType** list, int& count, int maxCount, Game* game, const std::string& imagePath)
+	{
+		if (!readExpectedLabel(input, label))
+		{
+			return false;
+		}
+
+		input >> count;
+		if (!input || count < 0 || count > maxCount)
+		{
+			return false;
+		}
+
+		for (int i = 0; i < count; i++)
+		{
+			point p;
+			int dx, dy, changeCounter;
+			input >> p.x >> p.y >> dx >> dy >> changeCounter;
+			if (!input)
+			{
+				return false;
+			}
+
+			list[i] = new AnimalType(game, p, 50, 50, imagePath);
+			list[i]->setDx(dx);
+			list[i]->setDy(dy);
+			list[i]->setChangeCounter(changeCounter);
+		}
+
+		return true;
 	}
 }
 
@@ -1172,7 +1242,155 @@ void Game::saveGame() const
 
 void Game::loadGame()
 {
-	printMessage("Load is ready to be connected to file logic");
+	std::ifstream input(kSaveGameFileName);
+	if (!input)
+	{
+		printMessage("No savegame.txt found");
+		return;
+	}
+
+	std::string label;
+	int version = 0;
+	input >> label >> version;
+	if (!input || label != "FarmFrenzySave" || version != 1)
+	{
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	if (!readExpectedLabel(input, "Username"))
+	{
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	input.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+	std::string loadedUsername;
+	std::getline(input, loadedUsername);
+
+	int loadedBudget = 0;
+	int loadedPaused = 0;
+	int loadedTimer = 0;
+	int loadedLevel = 0;
+	int loadedGoal = 0;
+	int loadedAnimals = 0;
+	int loadedWarehouseEgg = 0;
+	int loadedWarehouseMilk = 0;
+	int loadedWarehouseWool = 0;
+
+	if (!readExpectedLabel(input, "Budget") || !(input >> loadedBudget) ||
+		!readExpectedLabel(input, "Paused") || !(input >> loadedPaused) ||
+		!readExpectedLabel(input, "Timer") || !(input >> loadedTimer) ||
+		!readExpectedLabel(input, "Level") || !(input >> loadedLevel) ||
+		!readExpectedLabel(input, "Goal") || !(input >> loadedGoal) ||
+		!readExpectedLabel(input, "Animals") || !(input >> loadedAnimals) ||
+		!readExpectedLabel(input, "Warehouse") || !(input >> loadedWarehouseEgg >> loadedWarehouseMilk >> loadedWarehouseWool) ||
+		!readExpectedLabel(input, "Products"))
+	{
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	clearProducts();
+	clearWolves();
+	gameBudgetbar->resetAnimals();
+
+	username = loadedUsername;
+	budget = loadedBudget;
+	isPaused = (loadedPaused != 0);
+	timer = loadedTimer;
+	level = loadedLevel;
+	goal = loadedGoal;
+	animals = loadedAnimals;
+	warehouseEgg = loadedWarehouseEgg;
+	warehouseMilk = loadedWarehouseMilk;
+	warehouseWool = loadedWarehouseWool;
+	lastTime = GetTickCount();
+
+	if (!readProductList(input, "Eggs", eggList, eggCount, kMaxProducts, this) ||
+		!readProductList(input, "Milk", milkList, milkCount, kMaxProducts, this) ||
+		!readProductList(input, "Wool", woolList, woolCount, kMaxProducts, this) ||
+		!readExpectedLabel(input, "AnimalsOnField"))
+	{
+		resetGameState();
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	ChickIcon* chickIcon = gameBudgetbar->getChickIcon();
+	CowIcon* cowIcon = gameBudgetbar->getCowIcon();
+	GoatIcon* goatIcon = gameBudgetbar->getGoatIcon();
+	SheepIcon* sheepIcon = gameBudgetbar->getSheepIcon();
+	DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
+	WaterIcon* waterIcon = gameBudgetbar->getWaterIcon();
+
+	if (!readAnimalList(input, "Chicks", chickIcon->chickList, chickIcon->count, max_budget_items, this, chickIcon->image_path) ||
+		!readAnimalList(input, "Cows", cowIcon->cowList, cowIcon->count, max_budget_items, this, cowIcon->image_path) ||
+		!readAnimalList(input, "Goats", goatIcon->goatList, goatIcon->count, max_budget_items, this, goatIcon->image_path) ||
+		!readAnimalList(input, "Sheep", sheepIcon->sheepList, sheepIcon->count, max_budget_items, this, sheepIcon->image_path) ||
+		!readAnimalList(input, "Ducks", duckIcon->duckList, duckIcon->count, max_budget_items, this, duckIcon->image_path) ||
+		!readAnimalList(input, "Wolves", wolfList, wolfCount, kMaxProducts, this, "images\\wolf.jpg") ||
+		!readExpectedLabel(input, "Water"))
+	{
+		resetGameState();
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	input >> waterIcon->count;
+	if (!input || waterIcon->count < 0 || waterIcon->count > max_budget_items)
+	{
+		resetGameState();
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	for (int i = 0; i < waterIcon->count; i++)
+	{
+		point p;
+		input >> p.x >> p.y >> waterIcon->grassTileCounts[i];
+		if (!input || waterIcon->grassTileCounts[i] < 0 || waterIcon->grassTileCounts[i] > grass_tiles_per_water)
+		{
+			resetGameState();
+			printMessage("Save file is not valid");
+			return;
+		}
+
+		waterIcon->waterList[i] = new Water(this, p, 50, 50, waterIcon->image_path);
+		waterIcon->grassLastDecayTick[i] = GetTickCount();
+
+		for (int j = 0; j < waterIcon->grassTileCounts[i]; j++)
+		{
+			input >> waterIcon->grassTiles[i][j].x >> waterIcon->grassTiles[i][j].y;
+			if (!input)
+			{
+				resetGameState();
+				printMessage("Save file is not valid");
+				return;
+			}
+		}
+	}
+
+	animals = gameBudgetbar->getAnimalCount();
+
+	pWind->SetPen(config.bkGrndColor, 1);
+	pWind->SetBrush(config.bkGrndColor);
+	pWind->DrawRectangle(0, 0, config.windWidth, config.windHeight);
+	gameToolbar->draw();
+	gameBudgetbar->draw();
+	drawFoodArea();
+	DrawProducts();
+	gameBudgetbar->updateAnimals();
+	for (int i = 0; i < wolfCount; i++)
+	{
+		if (wolfList[i] != nullptr)
+		{
+			wolfList[i]->draw();
+		}
+	}
+	updateStatusBar();
+	printBudget("BUDGET = $" + to_string(budget));
+	printMessage("Game loaded from savegame.txt");
 }
 
 bool Game::addEgg(point location)

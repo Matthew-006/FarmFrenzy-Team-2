@@ -1,35 +1,52 @@
 FarmFrenzySave 1
 Username
 kerolos
-Budget 1720
+Budget 1000
 Paused 0
-Timer 26
+Timer 36
 Level 1
 Goal 5
-Animals 2
-Warehouse 0 0 1
+Animals 8
+Warehouse 0 1 0
 Products
-Eggs 0
-Milk 0
-Wool 1
-513 231
+Eggs 2
+40 204
+248 204
+Milk 4
+619 490
+283 477
+951 378
+718 469
+Wool 0
 AnimalsOnField
-Chicks 0
-Cows 0
-Goats 0
-Sheep 1
-500 199 2 3 254
+Chicks 2
+43 138 0 3 123
+256 154 3 0 116
+Cows 3
+462 142 3 3 209
+226 478 1 -1 130
+929 322 1 -2 108
+Goats 2
+697 413 2 -3 217
+337 476 2 2 136
+Sheep 0
 Ducks 1
-1065 464 -3 2 265
-Wolves 1
-644 150 -2 2 5
-Water 1
-131 226 8
-131 226
-103 226
-159 226
-131 198
-131 254
-111 206
-151 206
-131 246
+508 130 0 2 96
+Wolves 0
+Water 2
+170 205 6
+170 205
+142 205
+198 205
+170 177
+170 233
+150 185
+141 237 8
+141 237
+113 237
+169 237
+141 209
+141 265
+121 217
+161 217
+141 257
