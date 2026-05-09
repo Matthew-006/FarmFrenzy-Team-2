@@ -28,8 +28,6 @@ void Animal::draw() const
 	//draw image of this object
 	window* pWind = pGame->getWind();
 	pWind->DrawImage(sprite, RefPoint.x, RefPoint.y, width, height);
-	pWind->SetPen(BLACK); 
-	pWind->DrawString(RefPoint.x, RefPoint.y - 20, to_string(foodEatenCounter));
 }
 
 

@@ -1667,8 +1667,6 @@ void Game::go()
 			
 			gameBudgetbar->updateAnimals();
 			animals = gameBudgetbar->getAnimalCount();
-			gameBudgetbar->updateAnimals();
-			animals = gameBudgetbar->getAnimalCount();
 			updateStatusBar();
 		}
 
