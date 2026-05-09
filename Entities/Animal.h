@@ -4,11 +4,6 @@
 class Animal :public Drawable
 {
 protected:
-
-
-
-	int foodEatenCounter;
-
 	enum ProductType
 	{
 		PRODUCT_NONE,
@@ -54,19 +49,7 @@ public:
 	int getRemainingProductSeconds() const;
 	void drawCounter() const;
 	void produceProduct();
-
-	
-	void increaseFoodCounter() {
-		foodEatenCounter++;
-	}
-
-	
-	int getFoodCounter() {
-		return foodEatenCounter;
-	}
-	
-	
-	};
+};
  
 
 class Chick : public Animal
