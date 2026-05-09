@@ -303,7 +303,90 @@ window* Game::CreateWind(int w, int h, int x, int y) const
 	pW->DrawRectangle(0, 0, w, h);
 	return pW;
 }
+void Game::handleFeedingLogic()
+{
+	WaterIcon* waterIcon = gameBudgetbar->getWaterIcon();
 
+	
+	for (int j = 0; j < waterIcon->count; j++)
+	{
+		if (waterIcon->waterList[j] == nullptr) continue;
+
+		bool foodFinished = false;
+		point foodPos = waterIcon->waterList[j]->getRefPoint();
+
+		
+		ChickIcon* chickIcon = gameBudgetbar->getChickIcon();
+		for (int i = 0; i < chickIcon->count; i++) {
+			if (chickIcon->chickList[i] && rectanglesOverlap(chickIcon->chickList[i]->getRefPoint(), 50, 50, foodPos, 30, 30)) {
+				chickIcon->chickList[i]->increaseFoodCounter();
+				waterIcon->grassTileCounts[j]--;
+				printMessage("Chick ate! Total: " + to_string(chickIcon->chickList[i]->getFoodCounter()));
+				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
+			}
+		}
+		if (foodFinished) goto deleteFood;
+
+		
+		CowIcon* cowIcon = gameBudgetbar->getCowIcon();
+		for (int i = 0; i < cowIcon->count; i++) {
+			if (cowIcon->cowList[i] && rectanglesOverlap(cowIcon->cowList[i]->getRefPoint(), 60, 60, foodPos, 30, 30)) {
+				cowIcon->cowList[i]->increaseFoodCounter();
+				waterIcon->grassTileCounts[j]--;
+				printMessage("Cow ate! Total: " + to_string(cowIcon->cowList[i]->getFoodCounter()));
+				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
+			}
+		}
+		if (foodFinished) goto deleteFood;
+
+		
+		SheepIcon* sheepIcon = gameBudgetbar->getSheepIcon();
+		for (int i = 0; i < sheepIcon->count; i++) {
+			if (sheepIcon->sheepList[i] && rectanglesOverlap(sheepIcon->sheepList[i]->getRefPoint(), 55, 55, foodPos, 30, 30)) {
+				sheepIcon->sheepList[i]->increaseFoodCounter();
+				waterIcon->grassTileCounts[j]--;
+				printMessage("Sheep ate! Total: " + to_string(sheepIcon->sheepList[i]->getFoodCounter()));
+				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
+			}
+		}
+		if (foodFinished) goto deleteFood;
+
+		
+		GoatIcon* goatIcon = gameBudgetbar->getGoatIcon();
+		for (int i = 0; i < goatIcon->count; i++) {
+			if (goatIcon->goatList[i] && rectanglesOverlap(goatIcon->goatList[i]->getRefPoint(), 50, 50, foodPos, 30, 30)) {
+				goatIcon->goatList[i]->increaseFoodCounter();
+				waterIcon->grassTileCounts[j]--;
+				printMessage("Goat ate! Total: " + to_string(goatIcon->goatList[i]->getFoodCounter()));
+				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
+			}
+		}
+		if (foodFinished) goto deleteFood;
+
+		
+		DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
+		for (int i = 0; i < duckIcon->count; i++) {
+			if (duckIcon->duckList[i] && rectanglesOverlap(duckIcon->duckList[i]->getRefPoint(), 45, 45, foodPos, 30, 30)) {
+				duckIcon->duckList[i]->increaseFoodCounter();
+				waterIcon->grassTileCounts[j]--;
+				printMessage("Duck ate! Total: " + to_string(duckIcon->duckList[i]->getFoodCounter()));
+				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
+			}
+		}
+
+	deleteFood:
+		if (foodFinished)
+		{
+			delete waterIcon->waterList[j];
+			waterIcon->waterList[j] = waterIcon->waterList[waterIcon->count - 1];
+			waterIcon->grassTileCounts[j] = waterIcon->grassTileCounts[waterIcon->count - 1];
+			waterIcon->waterList[waterIcon->count - 1] = nullptr;
+			waterIcon->count--;
+			j--; 
+		}
+	}
+
+}
 void Game::createToolbar() 
 {
 	point toolbarUpperleft;
@@ -1581,6 +1664,134 @@ void Game::go()
 					}
 				}
 			}
+			
+void Game::go()
+ {
+	int x = 0, y = 0;
+	bool isExit = false;
+
+	pWind->ChangeTitle("- - - - - - - - - - Farm Frenzy (CIE101-project) - - - - - - - - - -");
+	if (exitRequested)
+	{
+		return;
+	}
+
+	do
+	{
+		if (!pWind->IsOpen())
+		{
+			break;
+		}
+
+		printBudget("BUDGET = $" + to_string(budget));
+
+		if (!isPaused)
+		{
+			updateTimer();
+			if (timer <= 0)
+			{
+				GameOverChoice choice = handleGameOver();
+				if (choice == PLAY_AGAIN)
+				{
+					restartGame();
+				}
+				else if (choice == DIFFERENT_USER)
+				{
+					promptForUsername();
+					if (exitRequested)
+					{
+						isExit = true;
+					}
+					else
+					{
+						restartGame();
+					}
+				}
+				else
+				{
+					isExit = true;
+				}
+				continue;
+			}
+			handleFeedingLogic();
+			drawFoodArea();
+			DrawProducts();
+			showRandomWolf();
+			for (int i = 0; i < wolfCount; i++) {
+				if (wolfList[i] != nullptr) {
+					wolfList[i]->moveStep();
+					DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
+					for (int j = 0; j < duckIcon->count; j++) {
+						if (duckIcon->duckList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, duckIcon->duckList[j]->getRefPoint(), 50, 50))
+						{
+							delete duckIcon->duckList[j];
+							duckIcon->duckList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your duck !");
+						}
+					}
+					ChickIcon* chikIcon = gameBudgetbar->getChickIcon();
+					for (int j = 0; j < chikIcon->count; j++) {
+						if (chikIcon->chickList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, chikIcon->chickList[j]->getRefPoint(), 50, 50))
+						{
+							delete chikIcon->chickList[j];
+							chikIcon->chickList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your chicken !");
+
+						}
+					}
+
+					SheepIcon* sheepIcon = gameBudgetbar->getSheepIcon();
+					for (int j = 0; j < sheepIcon->count; j++) {
+						if (sheepIcon->sheepList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, sheepIcon->sheepList[j]->getRefPoint(), 50, 50))
+						{
+							delete sheepIcon->sheepList[j];
+							sheepIcon->sheepList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your sheep !");
+						}
+					}
+					CowIcon* cowIcon = gameBudgetbar->getCowIcon();
+					for (int j = 0; j < cowIcon->count; j++) {
+						if (cowIcon->cowList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, cowIcon->cowList[j]->getRefPoint(), 50, 50))
+						{
+							delete cowIcon->cowList[j];
+							cowIcon->cowList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your cow !");
+						}
+					}
+					GoatIcon* goatIcon = gameBudgetbar->getGoatIcon();
+					for (int j = 0; j < goatIcon->count; j++) {
+						if (goatIcon->goatList[j] == nullptr) {
+							continue;
+						}
+						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, goatIcon->goatList[j]->getRefPoint(), 50, 50))
+						{
+							delete goatIcon->goatList[j];
+							goatIcon->goatList[j] = nullptr;
+							animals--;
+							printMessage("A wolf ate your goat !");
+						}
+					}
+				}
+			}
+			
+			gameBudgetbar->updateAnimals();
+			animals = gameBudgetbar->getAnimalCount();
 			gameBudgetbar->updateAnimals();
 			animals = gameBudgetbar->getAnimalCount();
 			updateStatusBar();

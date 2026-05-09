@@ -4,12 +4,18 @@
 class Animal :public Drawable
 {
 protected:
+
+
+
+	int foodEatenCounter;
+
 	enum ProductType
 	{
 		PRODUCT_NONE,
 		PRODUCT_EGG,
 		PRODUCT_MILK,
 		PRODUCT_WOOL
+		
 	};
 
 private:
@@ -20,7 +26,15 @@ private:
 	unsigned long lastProductTick;
 	int productIntervalMs;
 	ProductType productType;
+	int foodEatenCounter;
 public:
+	void increaseFoodCounter() {
+		foodEatenCounter++;
+	}
+
+	int getFoodCounter() {
+		return foodEatenCounter;
+	}
 	point curr_pos;
 	point curr_vel;
 	Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
@@ -40,7 +54,20 @@ public:
 	int getRemainingProductSeconds() const;
 	void drawCounter() const;
 	void produceProduct();
-};
+
+	
+	void increaseFoodCounter() {
+		foodEatenCounter++;
+	}
+
+	
+	int getFoodCounter() {
+		return foodEatenCounter;
+	}
+	
+	
+	};
+ 
 
 class Chick : public Animal
 {
@@ -96,5 +123,8 @@ class Duck : public Animal
 public:
 	Duck(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
 	virtual void moveStep();
-};
+	
 
+	
+
+};

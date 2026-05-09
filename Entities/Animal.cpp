@@ -20,6 +20,7 @@ Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string i
 	lastProductTick = GetTickCount();
 	productIntervalMs = 0;
 	productType = PRODUCT_NONE;
+	foodEatenCounter = 0;
 }
 
 void Animal::draw() const
@@ -27,7 +28,11 @@ void Animal::draw() const
 	//draw image of this object
 	window* pWind = pGame->getWind();
 	pWind->DrawImage(sprite, RefPoint.x, RefPoint.y, width, height);
+	pWind->SetPen(BLACK); 
+	pWind->DrawString(RefPoint.x, RefPoint.y - 20, to_string(foodEatenCounter));
 }
+
+
 
 bool Animal::isProductReady()
 {

@@ -109,5 +109,6 @@ public:
 
 	window* getWind() const;		//returns a pointer to the graphics window
 	Budgetbar* getBudgetbar() const;
+	void handleFeedingLogic();
 };
 
