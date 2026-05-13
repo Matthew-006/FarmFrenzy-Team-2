@@ -71,6 +71,7 @@ private:
 	void resetGameState();
 
 public:
+	void showWarehouseWindow();
 	static constexpr int kStartingBudget = 2000;
 	int budget = kStartingBudget;
 	Game();

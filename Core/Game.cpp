@@ -1168,40 +1168,17 @@ void Game::handleProductClick(int x, int y)
 		}
 	}
 }
-
-bool Game::handleWarehouseClick(int x, int y)
-{
+bool Game::handleWarehouseClick(int x, int y) {
 	int left, top, right, bottom;
 	getWarehouseInventoryBounds(left, top, right, bottom);
 
-	if (x < left || x > right || y < top || y > bottom)
+	if (x >= left && x <= right && y >= top && y <= bottom)
 	{
-		return false;
-	}
-
-	const int row1Y = top + 34;
-	const int rowGap = 28;
-	if (isInsideSellButton(x, y, left, row1Y))
-	{
-		sellWarehouseProduct(warehouseEgg, kEggPrice, "Egg");
+		showWarehouseWindow();
 		return true;
 	}
-
-	if (isInsideSellButton(x, y, left, row1Y + rowGap))
-	{
-		sellWarehouseProduct(warehouseMilk, kMilkPrice, "Milk");
-		return true;
-	}
-
-	if (isInsideSellButton(x, y, left, row1Y + (2 * rowGap)))
-	{
-		sellWarehouseProduct(warehouseWool, kWoolPrice, "Wool");
-		return true;
-	}
-
 	return false;
 }
-
 void Game::sellWarehouseProduct(int& productCount, int price, const std::string& productName)
 {
 	if (productCount <= 0)
@@ -1493,6 +1470,50 @@ bool Game::addEgg(point location)
 	return true;
 }
 
+//for the warehouse 
+void Game::showWarehouseWindow()
+{
+	
+	window* pWarehouseWind = new window(400, 300, 500, 200);
+	pWarehouseWind->ChangeTitle("Warehouse Inventory");
+
+	
+	pWarehouseWind->SetBrush(WHITE);
+	pWarehouseWind->DrawRectangle(0, 0, 400, 300);
+	pWarehouseWind->SetFont(20, BOLD, BY_NAME, "Arial");
+	pWarehouseWind->SetPen(BLACK);
+	pWarehouseWind->DrawString(50, 40, "Warehouse Contents:");
+	pWarehouseWind->DrawString(70, 100, "Eggs: " + std::to_string(warehouseEgg));
+	pWarehouseWind->DrawString(70, 140, "Milk: " + std::to_string(warehouseMilk));
+	pWarehouseWind->DrawString(70, 180, "Wool: " + std::to_string(warehouseWool));
+	pWarehouseWind->SetPen(RED);
+	pWarehouseWind->DrawString(40, 240, "Click anywhere on the main map to close");
+
+	
+	int x, y;
+	while (pWind->GetButtonState(LEFT_BUTTON, x, y)) {
+		Sleep(10);
+	}
+
+	
+	bool clickedOutside = false;
+	while (!clickedOutside)
+	{
+		
+		if (pWind->GetButtonState(LEFT_BUTTON, x, y))
+		{
+			clickedOutside = true;
+		}
+
+		
+		if (!pWind->IsOpen()) break;
+
+		Sleep(20); 
+	}
+
+	
+	delete pWarehouseWind;
+}
 bool Game::addMilk(point location)
 {
 	if (!findFreeProductSpot(location, 40, 40))
