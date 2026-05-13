@@ -94,6 +94,20 @@ namespace
 		}
 	}
 
+	template <typename ProductType>
+	void writeProductListWithType(std::ofstream& output, const std::string& countLabel, const std::string& productType, ProductType* const* list, int count)
+	{
+		output << countLabel << " " << count << std::endl;
+		for (int i = 0; i < count; i++)
+		{
+			if (list[i] != nullptr)
+			{
+				point p = list[i]->getRefPoint();
+				output << productType << " " << p.x << " " << p.y << std::endl;
+			}
+		}
+	}
+
 	template <typename AnimalType>
 	void writeAnimalList(std::ofstream& output, const std::string& label, AnimalType* const* list, int count)
 	{
@@ -108,6 +122,140 @@ namespace
 					<< list[i]->getChangeCounter() << std::endl;
 			}
 		}
+	}
+
+	template <typename AnimalType>
+	void writeAnimalRows(std::ofstream& output, const std::string& animalType, AnimalType* const* list, int count)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			if (list[i] != nullptr)
+			{
+				point p = list[i]->getRefPoint();
+				output << animalType << " " << p.x << " " << p.y << " "
+					<< list[i]->getDx() << " " << list[i]->getDy() << " "
+					<< list[i]->getChangeCounter() << std::endl;
+			}
+		}
+	}
+
+	std::string trimCopy(const std::string& value)
+	{
+		size_t first = value.find_first_not_of(" \t\r\n");
+		if (first == std::string::npos)
+		{
+			return "";
+		}
+
+		size_t last = value.find_last_not_of(" \t\r\n");
+		return value.substr(first, last - first + 1);
+	}
+
+	bool readDataLine(std::ifstream& input, std::string& line)
+	{
+		while (std::getline(input, line))
+		{
+			size_t commentStart = line.find("//");
+			if (commentStart != std::string::npos)
+			{
+				line = line.substr(0, commentStart);
+			}
+
+			line = trimCopy(line);
+			if (!line.empty())
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool parseLabelIntLine(const std::string& line, const std::string& expectedLabel, int& value)
+	{
+		std::stringstream parser(line);
+		std::string label;
+		parser >> label >> value;
+		return parser && label == expectedLabel;
+	}
+
+	bool readLabelIntLine(std::ifstream& input, const std::string& expectedLabel, int& value)
+	{
+		std::string line;
+		return readDataLine(input, line) && parseLabelIntLine(line, expectedLabel, value);
+	}
+
+	bool readSectionLine(std::ifstream& input, const std::string& expectedLabel)
+	{
+		std::string line;
+		if (!readDataLine(input, line))
+		{
+			return false;
+		}
+
+		std::stringstream parser(line);
+		std::string label;
+		parser >> label;
+		return parser && label == expectedLabel;
+	}
+
+	template <typename ProductType>
+	bool readTypedProductList(std::ifstream& input, const std::string& countLabel, const std::string& rowLabel, ProductType** list, int& count, int maxCount, Game* game)
+	{
+		if (!readLabelIntLine(input, countLabel, count) || count < 0 || count > maxCount)
+		{
+			return false;
+		}
+
+		for (int i = 0; i < count; i++)
+		{
+			std::string line;
+			if (!readDataLine(input, line))
+			{
+				return false;
+			}
+
+			std::stringstream parser(line);
+			std::string label;
+			point p;
+			parser >> label >> p.x >> p.y;
+			if (!parser || label != rowLabel)
+			{
+				return false;
+			}
+
+			list[i] = new ProductType(game, p);
+		}
+
+		return true;
+	}
+
+	template <typename AnimalType>
+	bool loadAnimalRow(const std::string& line, const std::string& expectedLabel, AnimalType** list, int& count, int maxCount, Game* game, const std::string& imagePath)
+	{
+		if (count >= maxCount)
+		{
+			return false;
+		}
+
+		std::stringstream parser(line);
+		std::string label;
+		point p;
+		int dx = 0;
+		int dy = 0;
+		int changeCounter = 0;
+		parser >> label >> p.x >> p.y >> dx >> dy >> changeCounter;
+		if (!parser || label != expectedLabel)
+		{
+			return false;
+		}
+
+		list[count] = new AnimalType(game, p, 50, 50, imagePath);
+		list[count]->setDx(dx);
+		list[count]->setDy(dy);
+		list[count]->setChangeCounter(changeCounter);
+		count++;
+		return true;
 	}
 
 	bool readExpectedLabel(std::ifstream& input, const std::string& expected)
@@ -1247,49 +1395,62 @@ void Game::saveGame() const
 		return;
 	}
 
-	output << "FarmFrenzySave 1" << std::endl;
-	output << "Username" << std::endl;
-	output << username << std::endl;
-	output << "Budget " << budget << std::endl;
-	output << "Paused " << (isPaused ? 1 : 0) << std::endl;
-	output << "Timer " << timer << std::endl;
-	output << "Level " << level << std::endl;
-	output << "Goal " << goal << std::endl;
-	output << "Animals " << animals << std::endl;
-	output << "Warehouse " << warehouseEgg << " " << warehouseMilk << " " << warehouseWool << std::endl;
-	output << "Products" << std::endl;
-	writeProductList(output, "Eggs", eggList, eggCount);
-	writeProductList(output, "Milk", milkList, milkCount);
-	writeProductList(output, "Wool", woolList, woolCount);
-	output << "AnimalsOnField" << std::endl;
-
 	ChickIcon* chickIcon = gameBudgetbar->getChickIcon();
 	CowIcon* cowIcon = gameBudgetbar->getCowIcon();
 	GoatIcon* goatIcon = gameBudgetbar->getGoatIcon();
 	SheepIcon* sheepIcon = gameBudgetbar->getSheepIcon();
 	DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
 	WaterIcon* waterIcon = gameBudgetbar->getWaterIcon();
+	const int savedAnimalCount = chickIcon->count + cowIcon->count + goatIcon->count + sheepIcon->count + duckIcon->count;
 
-	writeAnimalList(output, "Chicks", chickIcon->chickList, chickIcon->count);
-	writeAnimalList(output, "Cows", cowIcon->cowList, cowIcon->count);
-	writeAnimalList(output, "Goats", goatIcon->goatList, goatIcon->count);
-	writeAnimalList(output, "Sheep", sheepIcon->sheepList, sheepIcon->count);
-	writeAnimalList(output, "Ducks", duckIcon->duckList, duckIcon->count);
-	writeAnimalList(output, "Wolves", wolfList, wolfCount);
+	output << "LEVEL " << level << "    // Current level" << std::endl;
+	output << "BUDGET " << budget << "    // Current player budget" << std::endl;
+	output << "TIMER " << timer << "    // Remaining time in seconds" << std::endl;
+	output << "GOAL " << goal << "    // Level goal" << std::endl;
+	output << "PAUSED " << (isPaused ? 1 : 0) << "    // 1 if game is paused, 0 otherwise" << std::endl;
+	output << "USERNAME " << username << "    // Current player name" << std::endl;
+	output << std::endl;
 
-	output << "Water " << waterIcon->count << std::endl;
+	output << "ANIMALS " << savedAnimalCount << "    // Number of saved animals" << std::endl;
+	output << "// TYPE X Y DX DY COUNTER    Animal type, position, velocity, and movement counter" << std::endl;
+	writeAnimalRows(output, "CHICK", chickIcon->chickList, chickIcon->count);
+	writeAnimalRows(output, "COW", cowIcon->cowList, cowIcon->count);
+	writeAnimalRows(output, "GOAT", goatIcon->goatList, goatIcon->count);
+	writeAnimalRows(output, "SHEEP", sheepIcon->sheepList, sheepIcon->count);
+	writeAnimalRows(output, "DUCK", duckIcon->duckList, duckIcon->count);
+	output << std::endl;
+
+	output << "WOLVES " << wolfCount << "    // Number of alive wolves" << std::endl;
+	output << "// WOLF X Y DX DY COUNTER    Wolf label, position, velocity, and movement counter" << std::endl;
+	writeAnimalRows(output, "WOLF", wolfList, wolfCount);
+	output << std::endl;
+
+	output << "FOODAREAS " << waterIcon->count << "    // Number of active food areas" << std::endl;
+	output << "// FOOD X Y COUNT    Food label, position, and remaining food tile count" << std::endl;
 	for (int i = 0; i < waterIcon->count; i++)
 	{
 		if (waterIcon->waterList[i] != nullptr)
 		{
 			point p = waterIcon->waterList[i]->getRefPoint();
-			output << p.x << " " << p.y << " " << waterIcon->grassTileCounts[i] << std::endl;
+			output << "FOOD " << p.x << " " << p.y << " " << waterIcon->grassTileCounts[i] << std::endl;
 			for (int j = 0; j < waterIcon->grassTileCounts[i]; j++)
 			{
-				output << waterIcon->grassTiles[i][j].x << " " << waterIcon->grassTiles[i][j].y << std::endl;
+				output << "GRASS " << waterIcon->grassTiles[i][j].x << " " << waterIcon->grassTiles[i][j].y << std::endl;
 			}
 		}
 	}
+	output << std::endl;
+
+	output << "WAREHOUSE    // Start of warehouse data" << std::endl;
+	output << "EGGS " << warehouseEgg << "    // Eggs stored in warehouse" << std::endl;
+	output << "MILK " << warehouseMilk << "    // Milk bottles stored in warehouse" << std::endl;
+	output << "WOOL " << warehouseWool << "    // Wool stored in warehouse" << std::endl;
+	output << std::endl;
+
+	output << "PRODUCTS    // Products still on the field" << std::endl;
+	writeProductListWithType(output, "EGGS", "EGG", eggList, eggCount);
+	writeProductListWithType(output, "MILK", "MILK", milkList, milkCount);
+	writeProductListWithType(output, "WOOL", "WOOL", woolList, woolCount);
 
 	if (!output)
 	{
@@ -1309,25 +1470,6 @@ void Game::loadGame()
 		return;
 	}
 
-	std::string label;
-	int version = 0;
-	input >> label >> version;
-	if (!input || label != "FarmFrenzySave" || version != 1)
-	{
-		printMessage("Save file is not valid");
-		return;
-	}
-
-	if (!readExpectedLabel(input, "Username"))
-	{
-		printMessage("Save file is not valid");
-		return;
-	}
-
-	input.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
-	std::string loadedUsername;
-	std::getline(input, loadedUsername);
-
 	int loadedBudget = 0;
 	int loadedPaused = 0;
 	int loadedTimer = 0;
@@ -1337,15 +1479,13 @@ void Game::loadGame()
 	int loadedWarehouseEgg = 0;
 	int loadedWarehouseMilk = 0;
 	int loadedWarehouseWool = 0;
+	std::string loadedUsername;
 
-	if (!readExpectedLabel(input, "Budget") || !(input >> loadedBudget) ||
-		!readExpectedLabel(input, "Paused") || !(input >> loadedPaused) ||
-		!readExpectedLabel(input, "Timer") || !(input >> loadedTimer) ||
-		!readExpectedLabel(input, "Level") || !(input >> loadedLevel) ||
-		!readExpectedLabel(input, "Goal") || !(input >> loadedGoal) ||
-		!readExpectedLabel(input, "Animals") || !(input >> loadedAnimals) ||
-		!readExpectedLabel(input, "Warehouse") || !(input >> loadedWarehouseEgg >> loadedWarehouseMilk >> loadedWarehouseWool) ||
-		!readExpectedLabel(input, "Products"))
+	if (!readLabelIntLine(input, "LEVEL", loadedLevel) ||
+		!readLabelIntLine(input, "BUDGET", loadedBudget) ||
+		!readLabelIntLine(input, "TIMER", loadedTimer) ||
+		!readLabelIntLine(input, "GOAL", loadedGoal) ||
+		!readLabelIntLine(input, "PAUSED", loadedPaused))
 	{
 		printMessage("Save file is not valid");
 		return;
@@ -1355,22 +1495,36 @@ void Game::loadGame()
 	clearWolves();
 	gameBudgetbar->resetAnimals();
 
+	std::string line;
+	if (!readDataLine(input, line))
+	{
+		resetGameState();
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	std::stringstream usernameParser(line);
+	std::string usernameLabel;
+	usernameParser >> usernameLabel;
+	if (!usernameParser || usernameLabel != "USERNAME")
+	{
+		resetGameState();
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	std::getline(usernameParser, loadedUsername);
+	loadedUsername = trimCopy(loadedUsername);
+
 	username = loadedUsername;
 	budget = loadedBudget;
 	isPaused = (loadedPaused != 0);
 	timer = loadedTimer;
 	level = loadedLevel;
 	goal = loadedGoal;
-	animals = loadedAnimals;
-	warehouseEgg = loadedWarehouseEgg;
-	warehouseMilk = loadedWarehouseMilk;
-	warehouseWool = loadedWarehouseWool;
 	lastTime = GetTickCount();
 
-	if (!readProductList(input, "Eggs", eggList, eggCount, kMaxProducts, this) ||
-		!readProductList(input, "Milk", milkList, milkCount, kMaxProducts, this) ||
-		!readProductList(input, "Wool", woolList, woolCount, kMaxProducts, this) ||
-		!readExpectedLabel(input, "AnimalsOnField"))
+	if (!readLabelIntLine(input, "ANIMALS", loadedAnimals) || loadedAnimals < 0)
 	{
 		resetGameState();
 		printMessage("Save file is not valid");
@@ -1384,21 +1538,74 @@ void Game::loadGame()
 	DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
 	WaterIcon* waterIcon = gameBudgetbar->getWaterIcon();
 
-	if (!readAnimalList(input, "Chicks", chickIcon->chickList, chickIcon->count, max_budget_items, this, chickIcon->image_path) ||
-		!readAnimalList(input, "Cows", cowIcon->cowList, cowIcon->count, max_budget_items, this, cowIcon->image_path) ||
-		!readAnimalList(input, "Goats", goatIcon->goatList, goatIcon->count, max_budget_items, this, goatIcon->image_path) ||
-		!readAnimalList(input, "Sheep", sheepIcon->sheepList, sheepIcon->count, max_budget_items, this, sheepIcon->image_path) ||
-		!readAnimalList(input, "Ducks", duckIcon->duckList, duckIcon->count, max_budget_items, this, duckIcon->image_path) ||
-		!readAnimalList(input, "Wolves", wolfList, wolfCount, kMaxProducts, this, "images\\wolf.jpg") ||
-		!readExpectedLabel(input, "Water"))
+	for (int i = 0; i < loadedAnimals; i++)
+	{
+		if (!readDataLine(input, line))
+		{
+			resetGameState();
+			printMessage("Save file is not valid");
+			return;
+		}
+
+		std::stringstream typeParser(line);
+		std::string animalType;
+		typeParser >> animalType;
+		bool loaded = false;
+		if (animalType == "CHICK")
+		{
+			loaded = loadAnimalRow(line, "CHICK", chickIcon->chickList, chickIcon->count, max_budget_items, this, chickIcon->image_path);
+		}
+		else if (animalType == "COW")
+		{
+			loaded = loadAnimalRow(line, "COW", cowIcon->cowList, cowIcon->count, max_budget_items, this, cowIcon->image_path);
+		}
+		else if (animalType == "GOAT")
+		{
+			loaded = loadAnimalRow(line, "GOAT", goatIcon->goatList, goatIcon->count, max_budget_items, this, goatIcon->image_path);
+		}
+		else if (animalType == "SHEEP")
+		{
+			loaded = loadAnimalRow(line, "SHEEP", sheepIcon->sheepList, sheepIcon->count, max_budget_items, this, sheepIcon->image_path);
+		}
+		else if (animalType == "DUCK")
+		{
+			loaded = loadAnimalRow(line, "DUCK", duckIcon->duckList, duckIcon->count, max_budget_items, this, duckIcon->image_path);
+		}
+
+		if (!loaded)
+		{
+			resetGameState();
+			printMessage("Save file is not valid");
+			return;
+		}
+	}
+
+	if (!readLabelIntLine(input, "WOLVES", wolfCount) || wolfCount < 0 || wolfCount > kMaxProducts)
 	{
 		resetGameState();
 		printMessage("Save file is not valid");
 		return;
 	}
 
-	input >> waterIcon->count;
-	if (!input || waterIcon->count < 0 || waterIcon->count > max_budget_items)
+	for (int i = 0; i < wolfCount; i++)
+	{
+		if (!readDataLine(input, line))
+		{
+			resetGameState();
+			printMessage("Save file is not valid");
+			return;
+		}
+
+		int loadedWolfCount = i;
+		if (!loadAnimalRow(line, "WOLF", wolfList, loadedWolfCount, kMaxProducts, this, "images\\wolf.jpg"))
+		{
+			resetGameState();
+			printMessage("Save file is not valid");
+			return;
+		}
+	}
+
+	if (!readLabelIntLine(input, "FOODAREAS", waterIcon->count) || waterIcon->count < 0 || waterIcon->count > max_budget_items)
 	{
 		resetGameState();
 		printMessage("Save file is not valid");
@@ -1408,8 +1615,17 @@ void Game::loadGame()
 	for (int i = 0; i < waterIcon->count; i++)
 	{
 		point p;
-		input >> p.x >> p.y >> waterIcon->grassTileCounts[i];
-		if (!input || waterIcon->grassTileCounts[i] < 0 || waterIcon->grassTileCounts[i] > grass_tiles_per_water)
+		std::string foodLabel;
+		if (!readDataLine(input, line))
+		{
+			resetGameState();
+			printMessage("Save file is not valid");
+			return;
+		}
+
+		std::stringstream foodParser(line);
+		foodParser >> foodLabel >> p.x >> p.y >> waterIcon->grassTileCounts[i];
+		if (!foodParser || foodLabel != "FOOD" || waterIcon->grassTileCounts[i] < 0 || waterIcon->grassTileCounts[i] > grass_tiles_per_water)
 		{
 			resetGameState();
 			printMessage("Save file is not valid");
@@ -1421,8 +1637,17 @@ void Game::loadGame()
 
 		for (int j = 0; j < waterIcon->grassTileCounts[i]; j++)
 		{
-			input >> waterIcon->grassTiles[i][j].x >> waterIcon->grassTiles[i][j].y;
-			if (!input)
+			std::string grassLabel;
+			if (!readDataLine(input, line))
+			{
+				resetGameState();
+				printMessage("Save file is not valid");
+				return;
+			}
+
+			std::stringstream grassParser(line);
+			grassParser >> grassLabel >> waterIcon->grassTiles[i][j].x >> waterIcon->grassTiles[i][j].y;
+			if (!grassParser || grassLabel != "GRASS")
 			{
 				resetGameState();
 				printMessage("Save file is not valid");
@@ -1431,6 +1656,23 @@ void Game::loadGame()
 		}
 	}
 
+	if (!readSectionLine(input, "WAREHOUSE") ||
+		!readLabelIntLine(input, "EGGS", loadedWarehouseEgg) ||
+		!readLabelIntLine(input, "MILK", loadedWarehouseMilk) ||
+		!readLabelIntLine(input, "WOOL", loadedWarehouseWool) ||
+		!readSectionLine(input, "PRODUCTS") ||
+		!readTypedProductList(input, "EGGS", "EGG", eggList, eggCount, kMaxProducts, this) ||
+		!readTypedProductList(input, "MILK", "MILK", milkList, milkCount, kMaxProducts, this) ||
+		!readTypedProductList(input, "WOOL", "WOOL", woolList, woolCount, kMaxProducts, this))
+	{
+		resetGameState();
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	warehouseEgg = loadedWarehouseEgg;
+	warehouseMilk = loadedWarehouseMilk;
+	warehouseWool = loadedWarehouseWool;
 	animals = gameBudgetbar->getAnimalCount();
 
 	pWind->SetPen(config.bkGrndColor, 1);

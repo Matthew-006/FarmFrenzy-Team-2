@@ -1,29 +1,70 @@
-FarmFrenzySave 1
-Username
-Matthew
-Budget 1500
-Paused 0
-Timer 48
-Level 1
-Goal 5
-Animals 5
-Warehouse 0 0 0
-Products
-Eggs 0
-Milk 2
-172 308
-920 482
-Wool 0
-AnimalsOnField
-Chicks 0
-Cows 1
-897 468 1 -2 113
-Goats 2
-159 286 2 3 127
-137 497 1 -1 126
-Sheep 0
-Ducks 2
-38 479 -2 3 104
-489 220 -1 -2 102
-Wolves 0
-Water 0
+LEVEL 1    // Current level
+BUDGET 700    // Current player budget
+TIMER 44    // Remaining time in seconds
+GOAL 5    // Level goal
+PAUSED 0    // 1 if game is paused, 0 otherwise
+USERNAME kerolos    // Current player name
+
+ANIMALS 9    // Number of saved animals
+// TYPE X Y DX DY COUNTER    Animal type, position, velocity, and movement counter
+COW 1011 227 3 -1 75
+COW 891 297 -3 -3 73
+COW 369 370 -3 -2 71
+GOAT 203 413 0 3 85
+SHEEP 295 404 2 2 103
+SHEEP 938 249 -3 -3 102
+DUCK 104 393 -3 -2 34
+DUCK 491 235 -3 3 33
+DUCK 948 423 3 -3 32
+
+WOLVES 0    // Number of alive wolves
+// WOLF X Y DX DY COUNTER    Wolf label, position, velocity, and movement counter
+
+FOODAREAS 4    // Number of active food areas
+// FOOD X Y COUNT    Food label, position, and remaining food tile count
+FOOD 169 199 8
+GRASS 169 199
+GRASS 141 199
+GRASS 197 199
+GRASS 169 171
+GRASS 169 227
+GRASS 149 179
+GRASS 189 179
+GRASS 169 219
+FOOD 205 253 8
+GRASS 205 253
+GRASS 177 253
+GRASS 233 253
+GRASS 205 225
+GRASS 205 281
+GRASS 185 233
+GRASS 225 233
+GRASS 205 273
+FOOD 132 248 8
+GRASS 132 248
+GRASS 104 248
+GRASS 160 248
+GRASS 132 220
+GRASS 132 276
+GRASS 112 228
+GRASS 152 228
+GRASS 132 268
+FOOD 103 190 5
+GRASS 103 190
+GRASS 131 190
+GRASS 103 218
+GRASS 123 170
+GRASS 103 210
+
+WAREHOUSE    // Start of warehouse data
+EGGS 0    // Eggs stored in warehouse
+MILK 0    // Milk bottles stored in warehouse
+WOOL 0    // Wool stored in warehouse
+
+PRODUCTS    // Products still on the field
+EGGS 0
+MILK 1
+MILK 228 463
+WOOL 2
+WOOL 304 470
+WOOL 958 322
