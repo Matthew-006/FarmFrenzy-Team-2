@@ -1,60 +1,37 @@
 LEVEL 1    // Current level
-BUDGET 700    // Current player budget
-TIMER 44    // Remaining time in seconds
+BUDGET 900    // Current player budget
+TIMER 51    // Remaining time in seconds
 GOAL 5    // Level goal
 PAUSED 0    // 1 if game is paused, 0 otherwise
-USERNAME kerolos    // Current player name
+USERNAME KEROLOS    // Current player name
 
-ANIMALS 9    // Number of saved animals
+ANIMALS 10    // Number of saved animals
 // TYPE X Y DX DY COUNTER    Animal type, position, velocity, and movement counter
-COW 1011 227 3 -1 75
-COW 891 297 -3 -3 73
-COW 369 370 -3 -2 71
-GOAT 203 413 0 3 85
-SHEEP 295 404 2 2 103
-SHEEP 938 249 -3 -3 102
-DUCK 104 393 -3 -2 34
-DUCK 491 235 -3 3 33
-DUCK 948 423 3 -3 32
+CHICK 658 496 1 -2 29
+CHICK 487 431 -1 0 28
+COW 235 283 1 -2 36
+COW 637 275 1 0 34
+GOAT 296 138 -1 2 44
+GOAT 603 283 2 -1 40
+SHEEP 438 498 0 -2 49
+DUCK 540 158 -2 -1 19
+DUCK 860 495 -1 1 16
+DUCK 957 327 2 -1 14
 
 WOLVES 0    // Number of alive wolves
 // WOLF X Y DX DY COUNTER    Wolf label, position, velocity, and movement counter
 
-FOODAREAS 4    // Number of active food areas
+FOODAREAS 1    // Number of active food areas
 // FOOD X Y COUNT    Food label, position, and remaining food tile count
-FOOD 169 199 8
-GRASS 169 199
-GRASS 141 199
-GRASS 197 199
-GRASS 169 171
-GRASS 169 227
-GRASS 149 179
-GRASS 189 179
-GRASS 169 219
-FOOD 205 253 8
-GRASS 205 253
-GRASS 177 253
-GRASS 233 253
-GRASS 205 225
-GRASS 205 281
-GRASS 185 233
-GRASS 225 233
-GRASS 205 273
-FOOD 132 248 8
-GRASS 132 248
-GRASS 104 248
-GRASS 160 248
-GRASS 132 220
-GRASS 132 276
-GRASS 112 228
-GRASS 152 228
-GRASS 132 268
-FOOD 103 190 5
-GRASS 103 190
-GRASS 131 190
-GRASS 103 218
-GRASS 123 170
-GRASS 103 210
+FOOD 142 260 8
+GRASS 142 260
+GRASS 114 260
+GRASS 170 260
+GRASS 142 232
+GRASS 142 288
+GRASS 122 240
+GRASS 162 240
+GRASS 142 280
 
 WAREHOUSE    // Start of warehouse data
 EGGS 0    // Eggs stored in warehouse
@@ -63,8 +40,5 @@ WOOL 0    // Wool stored in warehouse
 
 PRODUCTS    // Products still on the field
 EGGS 0
-MILK 1
-MILK 228 463
-WOOL 2
-WOOL 304 470
-WOOL 958 322
+MILK 0
+WOOL 0
