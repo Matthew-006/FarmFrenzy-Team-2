@@ -1,31 +1,29 @@
 FarmFrenzySave 1
 Username
-Salma
-Budget 1715
+Matthew
+Budget 1500
 Paused 0
-Timer 12
+Timer 48
 Level 1
 Goal 5
 Animals 5
-Warehouse 1 2 0
+Warehouse 0 0 0
 Products
-Eggs 1
-152 383
+Eggs 0
 Milk 2
-529 478
-563 402
-Wool 1
-132 459
+172 308
+920 482
+Wool 0
 AnimalsOnField
-Chicks 1
-125 337 -1 2 414
+Chicks 0
 Cows 1
-558 326 -2 -1 421
-Goats 1
-504 433 -1 -2 428
-Sheep 1
-145 432 0 -3 391
-Ducks 1
-874 436 3 3 401
+897 468 1 -2 113
+Goats 2
+159 286 2 3 127
+137 497 1 -1 126
+Sheep 0
+Ducks 2
+38 479 -2 3 104
+489 220 -1 -2 102
 Wolves 0
 Water 0
