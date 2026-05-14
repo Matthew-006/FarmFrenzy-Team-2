@@ -737,6 +737,93 @@ void DuckIcon::resetAnimals()
 	count = 0;
 }
 
+DogIcon::DogIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : BudgetbarIcon(r_pGame, r_point, r_width, r_height, img_path)
+{
+	dogList = new Dog * [max_budget_items];
+	for (int i = 0; i < max_budget_items; i++)
+	{
+		dogList[i] = nullptr;
+	}
+}
+
+DogIcon::~DogIcon()
+{
+	resetAnimals();
+	delete[] dogList;
+}
+
+void DogIcon::onClick()
+{
+	cout << "Icon Dog Clicked" << endl;
+	if (canBuyItem(pGame, count) && pGame->spendBudget(dog_cost))
+	{
+		point p;
+		std::random_device rd1;
+		std::mt19937 gen1(rd1());
+		std::uniform_int_distribution<int> dist1(range_min_x, range_max_x);
+		p.x = dist1(gen1);
+
+		std::random_device rd2;
+		std::mt19937 gen2(rd2());
+		std::uniform_int_distribution<int> dist2(range_min_y, range_max_y);
+		p.y = dist2(gen2);
+
+		dogList[count] = new Dog(pGame, p, 50, 50, image_path);
+		dogList[count]->draw();
+		count++;
+		pGame->printMessage("Dog bought for $500");
+	}
+}
+
+void DogIcon::updateAnimals()
+{
+	for (int i = 0; i < count; i++)
+	{
+		if (dogList[i] == nullptr)
+		{
+			continue;
+		}
+
+		if (dogList[i]->isExpired())
+		{
+			delete dogList[i];
+			dogList[i] = dogList[count - 1];
+			dogList[count - 1] = nullptr;
+			count--;
+			i--;
+			continue;
+		}
+
+		point wolfPoint;
+		if (pGame->getNearestWolfPoint(dogList[i]->getRefPoint(), wolfPoint))
+		{
+			dogList[i]->moveToward(wolfPoint);
+			if (pGame->removeWolfAt(dogList[i]->getRefPoint(), 50, 50))
+			{
+				delete dogList[i];
+				dogList[i] = dogList[count - 1];
+				dogList[count - 1] = nullptr;
+				count--;
+				i--;
+			}
+		}
+		else
+		{
+			dogList[i]->moveStep();
+		}
+	}
+}
+
+void DogIcon::resetAnimals()
+{
+	for (int i = 0; i < count; i++)
+	{
+		delete dogList[i];
+		dogList[i] = nullptr;
+	}
+	count = 0;
+}
+
 Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	//First prepare List of images for each icon
@@ -747,6 +834,7 @@ Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : 
 	iconsImages[ICON_SHEEP] = "images\\sheep.JPEG";
 	iconsImages[ICON_WATER] = "images\\water.JPEG";
 	iconsImages[ICON_DUCK] = "images\\duck.jpg";
+	iconsImages[ICON_DOG] = "images\\dog.jpg";
 
 	point p;
 	p.x = 0;
@@ -772,6 +860,9 @@ Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : 
 	
 	iconsList[ICON_DUCK] = new DuckIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_DUCK]);
 	p.x += config.iconWidth;
+	
+	iconsList[ICON_DOG] = new DogIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_DOG]);
+	p.x += config.iconWidth;
 	//p.x += config.iconWidth;
 	//iconsList[ICON_CHICK] = new ChickIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_CHICK]);
 }
@@ -794,7 +885,7 @@ void Budgetbar::draw() const
 
 bool Budgetbar::handleClick(int x, int y)
 {
-	if (x > ANIMAL_COUNT * config.iconWidth)	//click outside toolbar boundaries
+	if (x >= ANIMAL_COUNT * config.iconWidth)	//click outside toolbar boundaries
 		return false;
 
 
@@ -820,6 +911,7 @@ void Budgetbar::updateAnimals()
 	((SheepIcon*)iconsList[ICON_SHEEP])->updateAnimals();
 	((WaterIcon*)iconsList[ICON_WATER])->updateAnimals();
 	((DuckIcon*)iconsList[ICON_DUCK])->updateAnimals();
+	((DogIcon*)iconsList[ICON_DOG])->updateAnimals();
 
 }
 
@@ -831,6 +923,7 @@ void Budgetbar::resetAnimals()
 	((SheepIcon*)iconsList[ICON_SHEEP])->resetAnimals();
 	((WaterIcon*)iconsList[ICON_WATER])->resetAnimals();
 	((DuckIcon*)iconsList[ICON_DUCK])->resetAnimals();
+	((DogIcon*)iconsList[ICON_DOG])->resetAnimals();
 }
 
 int Budgetbar::getAnimalCount() const
@@ -870,4 +963,9 @@ WaterIcon* Budgetbar::getWaterIcon() const
 DuckIcon* Budgetbar::getDuckIcon() const
 {
 	return (DuckIcon*)iconsList[ICON_DUCK];
+}
+
+DogIcon* Budgetbar::getDogIcon() const
+{
+	return (DogIcon*)iconsList[ICON_DOG];
 }

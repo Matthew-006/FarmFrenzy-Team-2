@@ -56,6 +56,12 @@ public:
 	virtual void onClick();
 };
 
+class SoundIcon : public ToolbarIcon
+{
+public:
+	SoundIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
+	virtual void onClick();
+};
 
 enum ICONS //The icons of the toolbar (you should add more icons)
 {
@@ -66,6 +72,7 @@ enum ICONS //The icons of the toolbar (you should add more icons)
 	ICON_RESUME,
 	ICON_SAVE,
 	ICON_LOAD,
+	ICON_SOUND,
 
 	ICON_EXIT,		//Exit icon
 

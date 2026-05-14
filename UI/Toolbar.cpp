@@ -57,6 +57,22 @@ void ToolbarIcon::draw() const
 		pWind->DrawLine(centerX, centerY + 2, centerX - 6, centerY - 4);
 		pWind->DrawLine(centerX, centerY + 2, centerX + 6, centerY - 4);
 	}
+	else if (label == "Sound")
+	{
+		pWind->SetPen(BLACK, 2);
+		pWind->SetBrush(color(90, 149, 214));
+		int speakerX[4] = { centerX - 13, centerX - 6, centerX - 6, centerX - 13 };
+		int speakerY[4] = { centerY - 5, centerY - 10, centerY + 10, centerY + 5 };
+		pWind->DrawPolygon(speakerX, speakerY, 4);
+		pWind->DrawRectangle(centerX - 17, centerY - 5, centerX - 13, centerY + 5);
+		pWind->DrawArc(centerX - 7, centerY - 9, centerX + 11, centerY + 9, -45, 45);
+		pWind->DrawArc(centerX - 5, centerY - 14, centerX + 18, centerY + 14, -45, 45);
+		if (pGame->isSoundMuted())
+		{
+			pWind->SetPen(RED, 3);
+			pWind->DrawLine(centerX - 17, centerY - 13, centerX + 17, centerY + 13);
+		}
+	}
 	else if (label == "Exit")
 	{
 		pWind->SetPen(RED, 3);
@@ -113,6 +129,14 @@ void LoadGameIcon::onClick()
 	pGame->loadGame();
 }
 
+SoundIcon::SoundIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : ToolbarIcon(r_pGame, r_point, r_width, r_height, img_path, "Sound")
+{}
+
+void SoundIcon::onClick()
+{
+	pGame->toggleSound();
+}
+
 Toolbar::Toolbar(Game* r_pGame, point r_point, int r_width, int r_height) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	//First prepare List of images for each icon
@@ -122,6 +146,7 @@ Toolbar::Toolbar(Game* r_pGame, point r_point, int r_width, int r_height) : Draw
 	iconsImages[ICON_RESUME] = "images\\RESUME.JPEG";
 	iconsImages[ICON_SAVE] = "images\\SAVE.JPEG";
 	iconsImages[ICON_LOAD] = "images\\LOAD.JPEG";
+	iconsImages[ICON_SOUND] = "";
 	iconsImages[ICON_EXIT] = "images\\EXIT.JPEG";
 	point p;
 	p.x = 0;
@@ -139,6 +164,8 @@ Toolbar::Toolbar(Game* r_pGame, point r_point, int r_width, int r_height) : Draw
 	iconsList[ICON_SAVE] = new SaveIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_SAVE]);
 	p.x += config.iconWidth;
 	iconsList[ICON_LOAD] = new LoadGameIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_LOAD]);
+	p.x += config.iconWidth;
+	iconsList[ICON_SOUND] = new SoundIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_SOUND]);
 	p.x += config.iconWidth;
 	iconsList[ICON_EXIT] = new ExitIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_EXIT]);
 	//p.x += config.iconWidth;
@@ -162,7 +189,7 @@ void Toolbar::draw() const
 
 bool Toolbar::handleClick(int x, int y)
 {
-	if (x > ICON_COUNT * config.iconWidth)	//click outside toolbar boundaries
+	if (x >= ICON_COUNT * config.iconWidth)	//click outside toolbar boundaries
 		return false;
 
 

@@ -4,6 +4,41 @@
 #include <iostream>
 using namespace std;
 
+namespace
+{
+	int randomVelocity(int maxSpeed)
+	{
+		int value = 0;
+		while (value == 0)
+		{
+			value = (rand() % (maxSpeed * 2 + 1)) - maxSpeed;
+		}
+		return value;
+	}
+
+	bool overlapsRect(const point& p, int width, int height, int left, int top, int right, int bottom)
+	{
+		return p.x < right && p.x + width > left &&
+			p.y < bottom && p.y + height > top;
+	}
+
+	void getBlockedWarehouseBounds(int& left, int& top, int& right, int& bottom)
+	{
+		const int fieldBottom = config.windHeight - config.statusBarHeight;
+		const int warehouseWidth = config.warehouseWidth;
+		const int warehouseHeight = config.warehouseHeight + 120;
+		const int warehouseLeft = config.windWidth - warehouseWidth - 35;
+		const int warehouseRight = warehouseLeft + warehouseWidth;
+		const int warehouseBottom = fieldBottom - 25;
+		const int warehouseTop = warehouseBottom - warehouseHeight;
+
+		left = warehouseLeft - 12;
+		top = warehouseTop - 70;
+		right = warehouseRight + 12;
+		bottom = warehouseBottom + 4;
+	}
+}
+
 Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	image_path = img_path;
@@ -21,6 +56,70 @@ Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string i
 	productIntervalMs = 0;
 	productType = PRODUCT_NONE;
 	foodEatenCounter = 0;
+}
+
+void Animal::moveInsideField(int maxSpeed, int changeInterval)
+{
+	setChangeCounter(getChangeCounter() + 1);
+
+	if (getChangeCounter() % changeInterval == 0 || getDx() == 0 || getDy() == 0)
+	{
+		setDx(randomVelocity(maxSpeed));
+		setDy(randomVelocity(maxSpeed));
+	}
+
+	point oldPoint = RefPoint;
+	RefPoint.x += getDx();
+	RefPoint.y += getDy();
+
+	const int minX = config.fieldPadding;
+	const int minY = (2 * config.toolBarHeight) + config.fieldPadding;
+	const int maxX = config.windWidth - config.fieldPadding - width;
+	const int maxY = config.windHeight - config.statusBarHeight - config.fieldPadding - height;
+
+	if (RefPoint.x < minX)
+	{
+		RefPoint.x = minX;
+		setDx(abs(getDx()));
+	}
+
+	if (RefPoint.y < minY)
+	{
+		RefPoint.y = minY;
+		setDy(abs(getDy()));
+	}
+
+	if (RefPoint.x > maxX)
+	{
+		RefPoint.x = maxX;
+		setDx(-abs(getDx()));
+	}
+
+	if (RefPoint.y > maxY)
+	{
+		RefPoint.y = maxY;
+		setDy(-abs(getDy()));
+	}
+
+	int warehouseLeft, warehouseTop, warehouseRight, warehouseBottom;
+	getBlockedWarehouseBounds(warehouseLeft, warehouseTop, warehouseRight, warehouseBottom);
+	if (overlapsRect(RefPoint, width, height, warehouseLeft, warehouseTop, warehouseRight, warehouseBottom))
+	{
+		RefPoint = oldPoint;
+		if (oldPoint.x + width <= warehouseLeft || oldPoint.x >= warehouseRight)
+		{
+			setDx(-getDx());
+		}
+		if (oldPoint.y + height <= warehouseTop || oldPoint.y >= warehouseBottom)
+		{
+			setDy(-getDy());
+		}
+		if (overlapsRect(RefPoint, width, height, warehouseLeft, warehouseTop, warehouseRight, warehouseBottom))
+		{
+			RefPoint.x = warehouseLeft - width - 1;
+			setDx(-abs(getDx()));
+		}
+	}
 }
 
 void Animal::draw() const
@@ -109,40 +208,7 @@ Chick::Chick(Game* r_pGame, point r_point, int r_width, int r_height, string img
 
 void Chick::moveStep()
 {
-	setChangeCounter(getChangeCounter() + 1);
-
-	if (getChangeCounter() % 20 == 0)
-	{
-		setDx((rand() % 7) - 3);
-		setDy((rand() % 7) - 3);
-	}
-
-	RefPoint.x += getDx();
-	RefPoint.y += getDy();
-
-	if (RefPoint.x < 0)
-	{
-		RefPoint.x = 0;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y < 2 * config.toolBarHeight)
-	{
-		RefPoint.y = 2 * config.toolBarHeight;
-		setDy(-getDy());
-	}
-
-	if (RefPoint.x > config.windWidth - width)
-	{
-		RefPoint.x = config.windWidth - width;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y > config.windHeight - config.statusBarHeight - height)
-	{
-		RefPoint.y = config.windHeight - config.statusBarHeight - height;
-		setDy(-getDy());
-	}
+	moveInsideField(2, 45);
 
 	if (isProductReady())
 	{
@@ -161,40 +227,7 @@ Cow::Cow(Game* r_pGame, point r_point, int r_width, int r_height, string img_pat
 
 void Cow::moveStep()
 {
-	setChangeCounter(getChangeCounter() + 1);
-
-	if (getChangeCounter() % 20 == 0)
-	{
-		setDx((rand() % 7) - 3);
-		setDy((rand() % 7) - 3);
-	}
-
-	RefPoint.x += getDx();
-	RefPoint.y += getDy();
-
-	if (RefPoint.x < 0)
-	{
-		RefPoint.x = 0;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y < 2 * config.toolBarHeight)
-	{
-		RefPoint.y = 2 * config.toolBarHeight;
-		setDy(-getDy());
-	}
-
-	if (RefPoint.x > config.windWidth - width)
-	{
-		RefPoint.x = config.windWidth - width;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y > config.windHeight - config.statusBarHeight - height)
-	{
-		RefPoint.y = config.windHeight - config.statusBarHeight - height;
-		setDy(-getDy());
-	}
+	moveInsideField(1, 70);
 
 	if (isProductReady())
 	{
@@ -213,44 +246,104 @@ Wolf::Wolf(Game* r_pGame, point r_point, int r_width, int r_height, string img_p
 
 void Wolf::moveStep()
 {
-	setChangeCounter(getChangeCounter() + 1);
-
-	if (getChangeCounter() % 20 == 0)
+	int level = pGame->getLevel();
+	int speedRange = 1 + ((level - 1) / 3);
+	if (speedRange > 4)
 	{
-		int level = pGame->getLevel();
-		int speedRange = (level / 2) + 2;
-		setDx((rand() % (speedRange * 2 + 1)) - speedRange);
-		setDy((rand() % (speedRange * 2 + 1)) - speedRange);
+		speedRange = 4;
+	}
+	moveInsideField(speedRange, 65);
+
+	draw();
+}
+
+Dog::Dog(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
+{
+	birthTick = GetTickCount64();
+	setDx(1);
+	setDy(1);
+}
+
+void Dog::moveStep()
+{
+	moveInsideField(2, 40);
+	draw();
+	drawLifetimeCounter();
+}
+
+void Dog::moveToward(point target)
+{
+	point dogPoint = getRefPoint();
+	const int dogCenterX = dogPoint.x + 25;
+	const int dogCenterY = dogPoint.y + 25;
+	const int targetCenterX = target.x + 25;
+	const int targetCenterY = target.y + 25;
+
+	if (targetCenterX > dogCenterX)
+	{
+		setDx(2);
+	}
+	else if (targetCenterX < dogCenterX)
+	{
+		setDx(-2);
+	}
+	else
+	{
+		setDx(0);
 	}
 
+	if (targetCenterY > dogCenterY)
+	{
+		setDy(2);
+	}
+	else if (targetCenterY < dogCenterY)
+	{
+		setDy(-2);
+	}
+	else
+	{
+		setDy(0);
+	}
+
+	point oldPoint = RefPoint;
 	RefPoint.x += getDx();
 	RefPoint.y += getDy();
 
-	if (RefPoint.x < 0)
+	if (RefPoint.x < config.fieldPadding ||
+		RefPoint.y < (2 * config.toolBarHeight) + config.fieldPadding ||
+		RefPoint.x > config.windWidth - config.fieldPadding - width ||
+		RefPoint.y > config.windHeight - config.statusBarHeight - config.fieldPadding - height)
 	{
-		RefPoint.x = 0;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y < 2 * config.toolBarHeight)
-	{
-		RefPoint.y = 2 * config.toolBarHeight;
-		setDy(-getDy());
-	}
-
-	if (RefPoint.x > config.windWidth - width)
-	{
-		RefPoint.x = config.windWidth - width;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y > config.windHeight - config.statusBarHeight - height)
-	{
-		RefPoint.y = config.windHeight - config.statusBarHeight - height;
-		setDy(-getDy());
+		RefPoint = oldPoint;
 	}
 
 	draw();
+	drawLifetimeCounter();
+}
+
+bool Dog::isExpired() const
+{
+	return GetTickCount64() - birthTick >= lifetimeMs;
+}
+
+int Dog::getRemainingLifetimeSeconds() const
+{
+	unsigned long elapsedMs = GetTickCount64() - birthTick;
+	if (elapsedMs >= lifetimeMs)
+	{
+		return 0;
+	}
+
+	unsigned long remainingMs = lifetimeMs - elapsedMs;
+	return static_cast<int>((remainingMs + 999) / 1000);
+}
+
+void Dog::drawLifetimeCounter() const
+{
+	window* pWind = pGame->getWind();
+	pWind->SetPen(BLACK, 1);
+	pWind->SetFont(12, BOLD, BY_NAME, "Arial");
+	pWind->DrawString(RefPoint.x + 17, RefPoint.y - 14, to_string(getRemainingLifetimeSeconds()));
 }
 
 Sheep::Sheep(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
@@ -260,40 +353,7 @@ Sheep::Sheep(Game* r_pGame, point r_point, int r_width, int r_height, string img
 }
 void Sheep::moveStep()
 {
-	setChangeCounter(getChangeCounter() + 1);
-
-	if (getChangeCounter() % 20 == 0)
-	{
-		setDx((rand() % 7) - 3);
-		setDy((rand() % 7) - 3);
-	}
-
-	RefPoint.x += getDx();
-	RefPoint.y += getDy();
-
-	if (RefPoint.x < 0)
-	{
-		RefPoint.x = 0;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y < 2 * config.toolBarHeight)
-	{
-		RefPoint.y = 2 * config.toolBarHeight;
-		setDy(-getDy());
-	}
-
-	if (RefPoint.x > config.windWidth - width)
-	{
-		RefPoint.x = config.windWidth - width;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y > config.windHeight - config.statusBarHeight - height)
-	{
-		RefPoint.y = config.windHeight - config.statusBarHeight - height;
-		setDy(-getDy());
-	}
+	moveInsideField(1, 60);
 
 	if (isProductReady())
 	{
@@ -313,40 +373,7 @@ Goat::Goat(Game* r_pGame, point r_point, int r_width, int r_height, string img_p
 
 void Goat::moveStep()
 {
-	setChangeCounter(getChangeCounter() + 1);
-
-	if (getChangeCounter() % 20 == 0)
-	{
-		setDx((rand() % 7) - 3);
-		setDy((rand() % 7) - 3);
-	}
-
-	RefPoint.x += getDx();
-	RefPoint.y += getDy();
-
-	if (RefPoint.x < 0)
-	{
-		RefPoint.x = 0;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y < 2 * config.toolBarHeight)
-	{
-		RefPoint.y = 2 * config.toolBarHeight;
-		setDy(-getDy());
-	}
-
-	if (RefPoint.x > config.windWidth - width)
-	{
-		RefPoint.x = config.windWidth - width;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y > config.windHeight - config.statusBarHeight - height)
-	{
-		RefPoint.y = config.windHeight - config.statusBarHeight - height;
-		setDy(-getDy());
-	}
+	moveInsideField(2, 55);
 
 	if (isProductReady())
 	{
@@ -374,40 +401,7 @@ Duck::Duck(Game* r_pGame, point r_point, int r_width, int r_height, string img_p
 
 void Duck::moveStep()
 {
-	setChangeCounter(getChangeCounter() + 1);
-
-	if (getChangeCounter() % 20 == 0)
-	{
-		setDx((rand() % 7) - 3);
-		setDy((rand() % 7) - 3);
-	}
-
-	RefPoint.x += getDx();
-	RefPoint.y += getDy();
-
-	if (RefPoint.x < 0)
-	{
-		RefPoint.x = 0;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y < 2 * config.toolBarHeight)
-	{
-		RefPoint.y = 2 * config.toolBarHeight;
-		setDy(-getDy());
-	}
-
-	if (RefPoint.x > config.windWidth - width)
-	{
-		RefPoint.x = config.windWidth - width;
-		setDx(-getDx());
-	}
-
-	if (RefPoint.y > config.windHeight - config.statusBarHeight - height)
-	{
-		RefPoint.y = config.windHeight - config.statusBarHeight - height;
-		setDy(-getDy());
-	}
+	moveInsideField(3, 40);
 
 	draw();
 	drawCounter();

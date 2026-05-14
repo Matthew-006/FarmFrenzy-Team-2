@@ -13,6 +13,7 @@ const int range_max_y = config.windHeight - config.statusBarHeight - 50;
 const int grass_tiles_per_water = 8;
 const int max_budget_items = 15;
 const int animal_cost = 100;
+const int dog_cost = 500;
 
 //Base class for all toolbar icons 
 class BudgetbarIcon :public Drawable
@@ -117,6 +118,18 @@ public:
 	void resetAnimals();
 };
 
+class DogIcon : public BudgetbarIcon
+{
+public:
+	Dog** dogList;
+	int count = 0;
+	DogIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
+	~DogIcon();
+	virtual void onClick();
+	void updateAnimals();
+	void resetAnimals();
+};
+
 
 // TO DO: The rest of icons in the toolbar
 
@@ -130,6 +143,7 @@ enum ANIMAL_ICONS //The icons of the toolbar (you should add more icons)
 	ICON_SHEEP,
 	ICON_WATER,
 	ICON_DUCK,
+	ICON_DOG,
 
 	//TODO: Add more icons names here
 
@@ -158,6 +172,7 @@ public:
 	SheepIcon* getSheepIcon() const;
 	WaterIcon* getWaterIcon() const;
 	DuckIcon* getDuckIcon() const;
+	DogIcon* getDogIcon() const;
 
 };
 

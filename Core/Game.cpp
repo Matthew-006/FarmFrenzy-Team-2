@@ -10,8 +10,6 @@
 #include <sstream>
 #include <windows.h>
 #include <mmsystem.h>
-#include <windows.h>
-#include <mmsystem.h>
 #pragma comment(lib, "winmm.lib")
 namespace
 {
@@ -354,12 +352,14 @@ Game::Game()
 
 	budget = kStartingBudget;
 	isPaused = false;
-	timer = 60;
+	timer = 90;
 	level = 1;
-	goal = 3000;
+	goal = 700;
+	score = 0;
 	animals = 0;
 	username = "Player";
 	exitRequested = false;
+	soundMuted = false;
 	lastTime = GetTickCount64();
 
 	//1 - Create the main window
@@ -390,11 +390,14 @@ Game::Game()
 
 	//7- Create and clear the status bar
 	clearStatusBar();
+	startBackgroundMusic();
 	
 }
 
 Game::~Game()
 {
+	stopBackgroundMusic();
+
 	for (int i = 0; i < eggCount; i++)
 	{
 		delete eggList[i];
@@ -716,11 +719,48 @@ void Game::clearStatusBar() const
 	pWind->SetPen(config.statusBarColor, 1);
 	pWind->SetBrush(config.statusBarColor);
 	pWind->DrawRectangle(0, config.windHeight - config.statusBarHeight, config.windWidth, config.windHeight);
-	PlaySound(TEXT("C:\\Users\\fawzy\\bg_music.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+}
+
+void Game::startBackgroundMusic() const
+{
+	if (!soundMuted)
+	{
+		if (GetFileAttributes(TEXT("bg.wav")) != INVALID_FILE_ATTRIBUTES)
+		{
+			PlaySound(TEXT("bg.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+		}
+		else if (GetFileAttributes(TEXT("..\\bg.wav")) != INVALID_FILE_ATTRIBUTES)
+		{
+			PlaySound(TEXT("..\\bg.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+		}
+	}
+}
+
+void Game::stopBackgroundMusic() const
+{
 	PlaySound(NULL, NULL, 0);
 }
 
+void Game::toggleSound()
+{
+	soundMuted = !soundMuted;
+	if (soundMuted)
+	{
+		stopBackgroundMusic();
+		printMessage("Sound muted");
+	}
+	else
+	{
+		startBackgroundMusic();
+		printMessage("Sound on");
+	}
+	gameToolbar->draw();
+}
 
+bool Game::isSoundMuted() const
+{
+	return soundMuted;
+}
 
 void Game::printMessage(std::string msg) const
 {
@@ -1026,7 +1066,7 @@ std::string Game::getUsernameFromStartScreen() const
 
 int Game::calculateScore() const
 {
-	return (warehouseEgg * kEggPrice) + (warehouseMilk * kMilkPrice) + (warehouseWool * kWoolPrice);
+	return score;
 }
 
 std::vector<std::pair<std::string, int>> Game::loadLeaderboard() const
@@ -1260,10 +1300,11 @@ void Game::updateTimer()
 }
 void Game::checkLevelUp()
 {
-	if (budget >= goal)
+	if (score >= goal)
 	{
 		level++;
-		goal += 1000;
+		goal = 700 + ((level - 1) * 800);
+		setTimerByLevel();
 
 		printMessage("LEVEL UP! Welcome to Level " + to_string(level));
 		updateStatusBar();
@@ -1271,7 +1312,7 @@ void Game::checkLevelUp()
 }
 void Game::setTimerByLevel()
 {
-	timer = 60 + ((level - 1) * 30);
+	timer = 90 + ((level - 1) * 20);
 }
 
 
@@ -1345,10 +1386,30 @@ void Game::handleProductClick(int x, int y)
 bool Game::handleWarehouseClick(int x, int y) {
 	int left, top, right, bottom;
 	getWarehouseInventoryBounds(left, top, right, bottom);
+	const int row1Y = top + 34;
+	const int rowGap = 28;
 
 	if (x >= left && x <= right && y >= top && y <= bottom)
 	{
-		showWarehouseWindow();
+		if (isInsideSellButton(x, y, left, row1Y))
+		{
+			sellWarehouseProduct(warehouseEgg, kEggPrice, "Egg");
+			return true;
+		}
+		if (isInsideSellButton(x, y, left, row1Y + rowGap))
+		{
+			sellWarehouseProduct(warehouseMilk, kMilkPrice, "Milk");
+			return true;
+		}
+		if (isInsideSellButton(x, y, left, row1Y + (2 * rowGap)))
+		{
+			sellWarehouseProduct(warehouseWool, kWoolPrice, "Wool");
+			return true;
+		}
+
+		printMessage("Warehouse - Eggs: " + to_string(warehouseEgg) +
+			" Milk: " + to_string(warehouseMilk) +
+			" Wool: " + to_string(warehouseWool));
 		return true;
 	}
 	return false;
@@ -1363,9 +1424,11 @@ void Game::sellWarehouseProduct(int& productCount, int price, const std::string&
 
 	productCount--;
 	budget += price;
+	score += price;
 	printBudget("BUDGET = $" + to_string(budget));
 	drawWarehouse();
 	printMessage(productName + " sold for $" + to_string(price));
+	checkLevelUp();
 }
 
 void Game::restartGame()
@@ -1389,9 +1452,10 @@ void Game::resetGameState()
 	clearWolves();
 	budget = kStartingBudget;
 	isPaused = false;
-	timer = 60;
+	timer = 90;
 	level = 1;
-	goal = 5;
+	goal = 700;
+	score = 0;
 	animals = 0;
 	warehouseEgg = 0;
 	warehouseMilk = 0;
@@ -1431,6 +1495,7 @@ void Game::saveGame() const
 
 	output << "LEVEL " << level << "    // Current level" << std::endl;
 	output << "BUDGET " << budget << "    // Current player budget" << std::endl;
+	output << "SCORE " << score << "    // Current player score from sold products" << std::endl;
 	output << "TIMER " << timer << "    // Remaining time in seconds" << std::endl;
 	output << "GOAL " << goal << "    // Level goal" << std::endl;
 	output << "PAUSED " << (isPaused ? 1 : 0) << "    // 1 if game is paused, 0 otherwise" << std::endl;
@@ -1501,6 +1566,7 @@ void Game::loadGame()
 	int loadedTimer = 0;
 	int loadedLevel = 0;
 	int loadedGoal = 0;
+	int loadedScore = 0;
 	int loadedAnimals = 0;
 	int loadedWarehouseEgg = 0;
 	int loadedWarehouseMilk = 0;
@@ -1508,9 +1574,34 @@ void Game::loadGame()
 	std::string loadedUsername;
 
 	if (!readLabelIntLine(input, "LEVEL", loadedLevel) ||
-		!readLabelIntLine(input, "BUDGET", loadedBudget) ||
-		!readLabelIntLine(input, "TIMER", loadedTimer) ||
-		!readLabelIntLine(input, "GOAL", loadedGoal) ||
+		!readLabelIntLine(input, "BUDGET", loadedBudget))
+	{
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	std::string scoreOrTimerLine;
+	if (!readDataLine(input, scoreOrTimerLine))
+	{
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	if (parseLabelIntLine(scoreOrTimerLine, "SCORE", loadedScore))
+	{
+		if (!readLabelIntLine(input, "TIMER", loadedTimer))
+		{
+			printMessage("Save file is not valid");
+			return;
+		}
+	}
+	else if (!parseLabelIntLine(scoreOrTimerLine, "TIMER", loadedTimer))
+	{
+		printMessage("Save file is not valid");
+		return;
+	}
+
+	if (!readLabelIntLine(input, "GOAL", loadedGoal) ||
 		!readLabelIntLine(input, "PAUSED", loadedPaused))
 	{
 		printMessage("Save file is not valid");
@@ -1548,6 +1639,7 @@ void Game::loadGame()
 	timer = loadedTimer;
 	level = loadedLevel;
 	goal = loadedGoal;
+	score = loadedScore;
 	lastTime = GetTickCount();
 
 
@@ -1697,20 +1789,6 @@ void Game::loadGame()
 		return;
 	}
 
-	if (!readSectionLine(input, "WAREHOUSE") ||
-		!readLabelIntLine(input, "EGGS", loadedWarehouseEgg) ||
-		!readLabelIntLine(input, "MILK", loadedWarehouseMilk) ||
-		!readLabelIntLine(input, "WOOL", loadedWarehouseWool) ||
-		!readSectionLine(input, "PRODUCTS") ||
-		!readTypedProductList(input, "EGGS", "EGG", eggList, eggCount, kMaxProducts, this) ||
-		!readTypedProductList(input, "MILK", "MILK", milkList, milkCount, kMaxProducts, this) ||
-		!readTypedProductList(input, "WOOL", "WOOL", woolList, woolCount, kMaxProducts, this))
-	{
-		resetGameState();
-		printMessage("Save file is not valid");
-		return;
-	}
-
 	warehouseEgg = loadedWarehouseEgg;
 	warehouseMilk = loadedWarehouseMilk;
 	warehouseWool = loadedWarehouseWool;
@@ -1840,6 +1918,52 @@ int Game::getLevel() const
 Budgetbar* Game::getBudgetbar() const
 {
 	return gameBudgetbar;
+}
+
+bool Game::getNearestWolfPoint(point fromPoint, point& wolfPoint) const
+{
+	bool foundWolf = false;
+	int bestDistance = 0;
+
+	for (int i = 0; i < wolfCount; i++)
+	{
+		if (wolfList[i] == nullptr)
+		{
+			continue;
+		}
+
+		point candidate = wolfList[i]->getRefPoint();
+		const int dx = candidate.x - fromPoint.x;
+		const int dy = candidate.y - fromPoint.y;
+		const int distance = (dx * dx) + (dy * dy);
+
+		if (!foundWolf || distance < bestDistance)
+		{
+			foundWolf = true;
+			bestDistance = distance;
+			wolfPoint = candidate;
+		}
+	}
+
+	return foundWolf;
+}
+
+bool Game::removeWolfAt(point dogPoint, int dogWidth, int dogHeight)
+{
+	for (int i = 0; i < wolfCount; i++)
+	{
+		if (wolfList[i] != nullptr && rectanglesOverlap(dogPoint, dogWidth, dogHeight, wolfList[i]->getRefPoint(), 50, 50))
+		{
+			delete wolfList[i];
+			wolfList[i] = wolfList[wolfCount - 1];
+			wolfList[wolfCount - 1] = nullptr;
+			wolfCount--;
+			printMessage("Dog chased the wolf away!");
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void Game::go()
@@ -1975,9 +2099,9 @@ void Game::go()
 
 		pWind->UpdateBuffer();
 
-		Sleep(60);
+		Sleep(16);
 
-		if (pWind->GetButtonState(LEFT_BUTTON, x, y))
+		if (pWind->GetMouseClick(x, y) == LEFT_CLICK)
 		{
 			if (y >= 0 && y < config.toolBarHeight)
 			{
@@ -1993,11 +2117,6 @@ void Game::go()
 				{
 					handleProductClick(x, y);
 				}
-			}
-
-			while (pWind->GetButtonState(LEFT_BUTTON, x, y))
-			{
-				Sleep(10);
 			}
 
 			if (isExit && pWind->IsOpen())
@@ -2026,12 +2145,18 @@ void Game::go()
 	} while (!isExit && pWind->IsOpen());
 }
 void Game::showRandomWolf() {
-	int showChance = 30 + (level * 5);
+	int showChance = 24 + ((level - 1) * 4);
+	if (showChance > 55)
+	{
+		showChance = 55;
+	}
 
 	if (wolfCount < kMaxProducts && (rand() % 10000) < showChance) {
-		int x = config.fieldPadding + (rand() % (config.windWidth - 2 * config.fieldPadding));
-		int usableHeight = config.playingAreaHeight - 2 * config.fieldPadding; 
-		int y = (config.toolBarHeight + config.fieldPadding) + (rand() % usableHeight);
+		const int maxWolfX = config.windWidth - config.warehouseWidth - 110;
+		const int minWolfY = (2 * config.toolBarHeight) + config.fieldPadding;
+		const int maxWolfY = config.windHeight - config.statusBarHeight - config.fieldPadding - 50;
+		int x = config.fieldPadding + (rand() % (maxWolfX - config.fieldPadding));
+		int y = minWolfY + (rand() % (maxWolfY - minWolfY));
 		point p = { x, y };
 		wolfList[wolfCount] = new Wolf(this, p, 50, 50, "images\\wolf.JPEG");
 		wolfCount++;

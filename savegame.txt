@@ -1,7 +1,8 @@
 LEVEL 1    // Current level
 BUDGET 900    // Current player budget
-TIMER 51    // Remaining time in seconds
-GOAL 5    // Level goal
+SCORE 0    // Current player score from sold products
+TIMER 90    // Remaining time in seconds
+GOAL 700    // Level goal
 PAUSED 0    // 1 if game is paused, 0 otherwise
 USERNAME KEROLOS    // Current player name
 

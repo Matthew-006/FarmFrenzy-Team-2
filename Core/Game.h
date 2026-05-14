@@ -46,9 +46,11 @@ private:
 	int timer;
 	int level;
 	int goal;
+	int score;
 	int animals;
 	std::string username;
 	bool exitRequested;
+	bool soundMuted;
 	void DrawProducts() const;
 	void clearProducts();
 	void clearWolves();
@@ -94,6 +96,10 @@ public:
 	void printBudget(std::string msg) const;
 	bool spendBudget(int amount);
 	void clearStatusBar() const;	//Clears the status bar
+	void startBackgroundMusic() const;
+	void stopBackgroundMusic() const;
+	void toggleSound();
+	bool isSoundMuted() const;
 	void updateTimer();
 	void updateStatusBar() const;
 	void restartGame();
@@ -105,6 +111,8 @@ public:
 	bool addMilk(point location);
 	bool addWool(point location);
 	int getLevel() const;
+	bool getNearestWolfPoint(point fromPoint, point& wolfPoint) const;
+	bool removeWolfAt(point dogPoint, int dogWidth, int dogHeight);
 
 
 	void printMessage(std::string msg) const;	//Print a message on Status bar

@@ -12,6 +12,7 @@ protected:
 		PRODUCT_WOOL
 		
 	};
+	void moveInsideField(int maxSpeed, int changeInterval);
 
 private:
 	string image_path;
@@ -77,6 +78,20 @@ public:
 		disapclicks--;
 		return (disapclicks <= 0);
 	}
+};
+
+class Dog : public Animal
+{
+private:
+	unsigned long birthTick;
+	static const unsigned long lifetimeMs = 10000;
+public:
+	Dog(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
+	virtual void moveStep();
+	void moveToward(point target);
+	bool isExpired() const;
+	int getRemainingLifetimeSeconds() const;
+	void drawLifetimeCounter() const;
 };
 
 class Goat : public Animal
