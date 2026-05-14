@@ -1522,13 +1522,6 @@ void Game::loadGame()
 	timer = loadedTimer;
 	level = loadedLevel;
 	goal = loadedGoal;
-<<<<<<< HEAD
-	animals = loadedAnimals;
-	warehouseEgg = loadedWarehouseEgg;
-	warehouseMilk = loadedWarehouseMilk;
-	warehouseWool = loadedWarehouseWool;
-	lastTime = GetTickCount64();
-=======
 	lastTime = GetTickCount();
 >>>>>>> e7a34431dd73d89ed6fc5ecf8a4e03944a505b3f
 
@@ -1678,6 +1671,20 @@ void Game::loadGame()
 		return;
 	}
 
+	if (!readSectionLine(input, "WAREHOUSE") ||
+		!readLabelIntLine(input, "EGGS", loadedWarehouseEgg) ||
+		!readLabelIntLine(input, "MILK", loadedWarehouseMilk) ||
+		!readLabelIntLine(input, "WOOL", loadedWarehouseWool) ||
+		!readSectionLine(input, "PRODUCTS") ||
+		!readTypedProductList(input, "EGGS", "EGG", eggList, eggCount, kMaxProducts, this) ||
+		!readTypedProductList(input, "MILK", "MILK", milkList, milkCount, kMaxProducts, this) ||
+		!readTypedProductList(input, "WOOL", "WOOL", woolList, woolCount, kMaxProducts, this))
+	{
+		resetGameState();
+		printMessage("Save file is not valid");
+		return;
+	}
+
 	warehouseEgg = loadedWarehouseEgg;
 	warehouseMilk = loadedWarehouseMilk;
 	warehouseWool = loadedWarehouseWool;
@@ -1719,6 +1726,47 @@ bool Game::addEgg(point location)
 	eggCount++;
 	return true;
 }
+
+//for the warehouse 
+void Game::showWarehouseWindow()
+{
+	
+	window* pWarehouseWind = new window(400, 300, 500, 200);
+	pWarehouseWind->ChangeTitle("Warehouse Inventory");
+
+	
+	pWarehouseWind->SetBrush(WHITE);
+	pWarehouseWind->DrawRectangle(0, 0, 400, 300);
+	pWarehouseWind->SetFont(20, BOLD, BY_NAME, "Arial");
+	pWarehouseWind->SetPen(BLACK);
+	pWarehouseWind->DrawString(50, 40, "Warehouse Contents:");
+	pWarehouseWind->DrawString(70, 100, "Eggs: " + std::to_string(warehouseEgg));
+	pWarehouseWind->DrawString(70, 140, "Milk: " + std::to_string(warehouseMilk));
+	pWarehouseWind->DrawString(70, 180, "Wool: " + std::to_string(warehouseWool));
+	pWarehouseWind->SetPen(RED);
+	pWarehouseWind->DrawString(40, 240, "Click anywhere on the main map to close");
+
+	
+	int x, y;
+	while (pWind->GetButtonState(LEFT_BUTTON, x, y)) {
+		Sleep(10);
+	}
+
+	
+	bool clickedOutside = false;
+	while (!clickedOutside)
+	{
+		
+		if (pWind->GetButtonState(LEFT_BUTTON, x, y))
+		{
+			clickedOutside = true;
+		}
+
+		
+		if (!pWind->IsOpen()) break;
+
+		Sleep(20); 
+	}
 
 //for the warehouse 
 void Game::showWarehouseWindow()
