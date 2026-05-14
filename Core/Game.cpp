@@ -1522,11 +1522,15 @@ void Game::loadGame()
 	timer = loadedTimer;
 	level = loadedLevel;
 	goal = loadedGoal;
+<<<<<<< HEAD
 	animals = loadedAnimals;
 	warehouseEgg = loadedWarehouseEgg;
 	warehouseMilk = loadedWarehouseMilk;
 	warehouseWool = loadedWarehouseWool;
 	lastTime = GetTickCount64();
+=======
+	lastTime = GetTickCount();
+>>>>>>> e7a34431dd73d89ed6fc5ecf8a4e03944a505b3f
 
 	if (!readLabelIntLine(input, "ANIMALS", loadedAnimals) || loadedAnimals < 0)
 	{
