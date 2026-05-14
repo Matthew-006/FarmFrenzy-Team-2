@@ -231,4 +231,9 @@
     </ClInclude>
     <ClInclude Include="Product.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="..\..\jjj\Debug\bg_music.wav">
+      <Filter>Core</Filter>
+    </Media>
+  </ItemGroup>
 </Project>
