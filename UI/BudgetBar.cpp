@@ -800,11 +800,7 @@ void DogIcon::updateAnimals()
 			dogList[i]->moveToward(wolfPoint);
 			if (pGame->removeWolfAt(dogList[i]->getRefPoint(), 50, 50))
 			{
-				delete dogList[i];
-				dogList[i] = dogList[count - 1];
-				dogList[count - 1] = nullptr;
-				count--;
-				i--;
+				dogList[i]->moveStep();
 			}
 		}
 		else

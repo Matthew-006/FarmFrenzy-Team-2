@@ -13,12 +13,14 @@ protected:
 		
 	};
 	void moveInsideField(int maxSpeed, int changeInterval);
+	bool shouldSkipMovementFrame();
 
 private:
 	string image_path;
 	image sprite;
 	int dx, dy;
 	int changeCounter;
+	int movementCounter;
 	unsigned long lastProductTick;
 	int productIntervalMs;
 	ProductType productType;

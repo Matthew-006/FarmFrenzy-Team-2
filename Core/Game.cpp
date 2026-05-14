@@ -44,6 +44,22 @@ namespace
 		}
 	}
 
+	void getWarehouseBounds(int& left, int& top, int& right, int& bottom)
+	{
+		const int fieldBottom = config.windHeight - config.statusBarHeight;
+		const int warehouseWidth = config.warehouseWidth;
+		const int warehouseHeight = config.warehouseHeight + 120;
+		const int warehouseLeft = config.windWidth - warehouseWidth - 35;
+		const int warehouseRight = warehouseLeft + warehouseWidth;
+		const int warehouseBottom = fieldBottom - 25;
+		const int warehouseTop = warehouseBottom - warehouseHeight;
+
+		left = warehouseLeft - 10;
+		top = warehouseTop - 70;
+		right = warehouseRight + 10;
+		bottom = warehouseBottom;
+	}
+
 	void getWarehouseInventoryBounds(int& left, int& top, int& right, int& bottom)
 	{
 		const int fieldBottom = config.windHeight - config.statusBarHeight;
@@ -1386,10 +1402,12 @@ void Game::handleProductClick(int x, int y)
 bool Game::handleWarehouseClick(int x, int y) {
 	int left, top, right, bottom;
 	getWarehouseInventoryBounds(left, top, right, bottom);
+	int warehouseLeft, warehouseTop, warehouseRight, warehouseBottom;
+	getWarehouseBounds(warehouseLeft, warehouseTop, warehouseRight, warehouseBottom);
 	const int row1Y = top + 34;
 	const int rowGap = 28;
 
-	if (x >= left && x <= right && y >= top && y <= bottom)
+	if (x >= warehouseLeft && x <= warehouseRight && y >= warehouseTop && y <= warehouseBottom)
 	{
 		if (isInsideSellButton(x, y, left, row1Y))
 		{
@@ -1407,6 +1425,7 @@ bool Game::handleWarehouseClick(int x, int y) {
 			return true;
 		}
 
+		showWarehouseWindow();
 		printMessage("Warehouse - Eggs: " + to_string(warehouseEgg) +
 			" Milk: " + to_string(warehouseMilk) +
 			" Wool: " + to_string(warehouseWool));
@@ -1872,6 +1891,7 @@ void Game::showWarehouseWindow()
 		Sleep(20);
 	}
 
+	delete pWarehouseWind;
 }
 bool Game::addMilk(point location)
 {

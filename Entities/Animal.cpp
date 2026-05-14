@@ -52,14 +52,26 @@ Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string i
 	dx = (rand() % 5) - 2;
 	dy = (rand() % 5) - 2;
 	changeCounter = 0;
+	movementCounter = 0;
 	lastProductTick = GetTickCount64();
 	productIntervalMs = 0;
 	productType = PRODUCT_NONE;
 	foodEatenCounter = 0;
 }
 
+bool Animal::shouldSkipMovementFrame()
+{
+	movementCounter++;
+	return movementCounter % 5 == 0;
+}
+
 void Animal::moveInsideField(int maxSpeed, int changeInterval)
 {
+	if (shouldSkipMovementFrame())
+	{
+		return;
+	}
+
 	setChangeCounter(getChangeCounter() + 1);
 
 	if (getChangeCounter() % changeInterval == 0 || getDx() == 0 || getDy() == 0)
@@ -266,7 +278,7 @@ Dog::Dog(Game* r_pGame, point r_point, int r_width, int r_height, string img_pat
 
 void Dog::moveStep()
 {
-	moveInsideField(2, 40);
+	moveInsideField(3, 35);
 	draw();
 	drawLifetimeCounter();
 }
@@ -278,14 +290,15 @@ void Dog::moveToward(point target)
 	const int dogCenterY = dogPoint.y + 25;
 	const int targetCenterX = target.x + 25;
 	const int targetCenterY = target.y + 25;
+	const int chaseSpeed = 6;
 
 	if (targetCenterX > dogCenterX)
 	{
-		setDx(2);
+		setDx(chaseSpeed);
 	}
 	else if (targetCenterX < dogCenterX)
 	{
-		setDx(-2);
+		setDx(-chaseSpeed);
 	}
 	else
 	{
@@ -294,11 +307,11 @@ void Dog::moveToward(point target)
 
 	if (targetCenterY > dogCenterY)
 	{
-		setDy(2);
+		setDy(chaseSpeed);
 	}
 	else if (targetCenterY < dogCenterY)
 	{
-		setDy(-2);
+		setDy(-chaseSpeed);
 	}
 	else
 	{
