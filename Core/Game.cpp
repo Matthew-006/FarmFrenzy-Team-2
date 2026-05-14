@@ -207,7 +207,7 @@ Game::Game()
 	animals = 0;
 	username = "Player";
 	exitRequested = false;
-	lastTime = GetTickCount();
+	lastTime = GetTickCount64();
 
 	//1 - Create the main window
 	pWind = CreateWind(config.windWidth, config.windHeight, config.wx, config.wy);
@@ -1092,7 +1092,7 @@ bool Game::findFreeProductSpot(point& location, int width, int height) const
 
 void Game::updateTimer()
 {
-	unsigned long currentTime = GetTickCount();
+	unsigned long currentTime = GetTickCount64();
 
 	if (currentTime - lastTime >= 1000 && timer > 0)
 	{
@@ -1245,7 +1245,7 @@ void Game::resetGameState()
 	warehouseEgg = 0;
 	warehouseMilk = 0;
 	warehouseWool = 0;
-	lastTime = GetTickCount();
+	lastTime = GetTickCount64();
 	gameBudgetbar->resetAnimals();
 }
 
@@ -1388,7 +1388,7 @@ void Game::loadGame()
 	warehouseEgg = loadedWarehouseEgg;
 	warehouseMilk = loadedWarehouseMilk;
 	warehouseWool = loadedWarehouseWool;
-	lastTime = GetTickCount();
+	lastTime = GetTickCount64();
 
 	if (!readProductList(input, "Eggs", eggList, eggCount, kMaxProducts, this) ||
 		!readProductList(input, "Milk", milkList, milkCount, kMaxProducts, this) ||
@@ -1440,7 +1440,7 @@ void Game::loadGame()
 		}
 
 		waterIcon->waterList[i] = new Water(this, p, 50, 50, waterIcon->image_path);
-		waterIcon->grassLastDecayTick[i] = GetTickCount();
+		waterIcon->grassLastDecayTick[i] = GetTickCount64();
 
 		for (int j = 0; j < waterIcon->grassTileCounts[i]; j++)
 		{

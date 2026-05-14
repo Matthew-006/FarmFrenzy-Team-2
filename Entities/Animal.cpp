@@ -17,7 +17,7 @@ Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string i
 	dx = (rand() % 5) - 2;
 	dy = (rand() % 5) - 2;
 	changeCounter = 0;
-	lastProductTick = GetTickCount();
+	lastProductTick = GetTickCount64();
 	productIntervalMs = 0;
 	productType = PRODUCT_NONE;
 	foodEatenCounter = 0;
@@ -39,7 +39,7 @@ bool Animal::isProductReady()
 		return false;
 	}
 
-	unsigned long currentTick = GetTickCount();
+	unsigned long currentTick = GetTickCount64();
 	if (currentTick - lastProductTick < static_cast<unsigned long>(productIntervalMs))
 	{
 		return false;
@@ -56,7 +56,7 @@ int Animal::getRemainingProductSeconds() const
 		return -1;
 	}
 
-	unsigned long currentTick = GetTickCount();
+	unsigned long currentTick = GetTickCount64();
 	unsigned long elapsedMs = currentTick - lastProductTick;
 	if (elapsedMs >= static_cast<unsigned long>(productIntervalMs))
 	{
