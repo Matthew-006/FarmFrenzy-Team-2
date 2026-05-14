@@ -8,7 +8,11 @@
 #include <fstream>
 #include <limits>
 #include <sstream>
-
+#include <windows.h>
+#include <mmsystem.h>
+#include <windows.h>
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
 namespace
 {
 	const int kFeedingAreaCenterX = 170;
@@ -330,6 +334,7 @@ namespace
 
 Game::Game()
 {
+	
 	wolfCount = 0;
 	for (int i = 0; i < kMaxProducts; i++) {
 		wolfList[i] = nullptr;
@@ -351,7 +356,7 @@ Game::Game()
 	isPaused = false;
 	timer = 60;
 	level = 1;
-	goal = 5;
+	goal = 3000;
 	animals = 0;
 	username = "Player";
 	exitRequested = false;
@@ -385,6 +390,7 @@ Game::Game()
 
 	//7- Create and clear the status bar
 	clearStatusBar();
+	
 }
 
 Game::~Game()
@@ -710,7 +716,11 @@ void Game::clearStatusBar() const
 	pWind->SetPen(config.statusBarColor, 1);
 	pWind->SetBrush(config.statusBarColor);
 	pWind->DrawRectangle(0, config.windHeight - config.statusBarHeight, config.windWidth, config.windHeight);
+	PlaySound(TEXT("C:\\Users\\fawzy\\bg_music.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+	PlaySound(NULL, NULL, 0);
 }
+
+
 
 void Game::printMessage(std::string msg) const
 {
@@ -1248,6 +1258,22 @@ void Game::updateTimer()
 		lastTime = currentTime;
 	}
 }
+void Game::checkLevelUp()
+{
+	if (budget >= goal)
+	{
+		level++;
+		goal += 1000;
+
+		printMessage("LEVEL UP! Welcome to Level " + to_string(level));
+		updateStatusBar();
+	}
+}
+void Game::setTimerByLevel()
+{
+	timer = 60 + ((level - 1) * 30);
+}
+
 
 void Game::handleProductClick(int x, int y)
 {
@@ -1523,7 +1549,7 @@ void Game::loadGame()
 	level = loadedLevel;
 	goal = loadedGoal;
 	lastTime = GetTickCount();
->>>>>>> e7a34431dd73d89ed6fc5ecf8a4e03944a505b3f
+
 
 	if (!readLabelIntLine(input, "ANIMALS", loadedAnimals) || loadedAnimals < 0)
 	{
@@ -1730,11 +1756,11 @@ bool Game::addEgg(point location)
 //for the warehouse 
 void Game::showWarehouseWindow()
 {
-	
+
 	window* pWarehouseWind = new window(400, 300, 500, 200);
 	pWarehouseWind->ChangeTitle("Warehouse Inventory");
 
-	
+
 	pWarehouseWind->SetBrush(WHITE);
 	pWarehouseWind->DrawRectangle(0, 0, 400, 300);
 	pWarehouseWind->SetFont(20, BOLD, BY_NAME, "Arial");
@@ -1746,71 +1772,28 @@ void Game::showWarehouseWindow()
 	pWarehouseWind->SetPen(RED);
 	pWarehouseWind->DrawString(40, 240, "Click anywhere on the main map to close");
 
-	
+
 	int x, y;
 	while (pWind->GetButtonState(LEFT_BUTTON, x, y)) {
 		Sleep(10);
 	}
 
-	
+
 	bool clickedOutside = false;
 	while (!clickedOutside)
 	{
-		
+
 		if (pWind->GetButtonState(LEFT_BUTTON, x, y))
 		{
 			clickedOutside = true;
 		}
 
-		
+
 		if (!pWind->IsOpen()) break;
 
-		Sleep(20); 
+		Sleep(20);
 	}
 
-//for the warehouse 
-void Game::showWarehouseWindow()
-{
-	
-	window* pWarehouseWind = new window(400, 300, 500, 200);
-	pWarehouseWind->ChangeTitle("Warehouse Inventory");
-
-	
-	pWarehouseWind->SetBrush(WHITE);
-	pWarehouseWind->DrawRectangle(0, 0, 400, 300);
-	pWarehouseWind->SetFont(20, BOLD, BY_NAME, "Arial");
-	pWarehouseWind->SetPen(BLACK);
-	pWarehouseWind->DrawString(50, 40, "Warehouse Contents:");
-	pWarehouseWind->DrawString(70, 100, "Eggs: " + std::to_string(warehouseEgg));
-	pWarehouseWind->DrawString(70, 140, "Milk: " + std::to_string(warehouseMilk));
-	pWarehouseWind->DrawString(70, 180, "Wool: " + std::to_string(warehouseWool));
-	pWarehouseWind->SetPen(RED);
-	pWarehouseWind->DrawString(40, 240, "Click anywhere on the main map to close");
-
-	
-	int x, y;
-	while (pWind->GetButtonState(LEFT_BUTTON, x, y)) {
-		Sleep(10);
-	}
-
-	
-	bool clickedOutside = false;
-	while (!clickedOutside)
-	{
-		
-		if (pWind->GetButtonState(LEFT_BUTTON, x, y))
-		{
-			clickedOutside = true;
-		}
-
-		
-		if (!pWind->IsOpen()) break;
-
-		Sleep(20); 
-	}
-
-	
-	delete pWarehouseWind;
 }
 bool Game::addMilk(point location)
 {

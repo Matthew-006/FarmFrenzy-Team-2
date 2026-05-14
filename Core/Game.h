@@ -71,6 +71,9 @@ private:
 	void resetGameState();
 
 public:
+
+	void setTimerByLevel();
+	void checkLevelUp();
 	void showWarehouseWindow();
 	static constexpr int kStartingBudget = 2000;
 	int budget = kStartingBudget;
