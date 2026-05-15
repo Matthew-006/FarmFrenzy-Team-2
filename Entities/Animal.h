@@ -30,7 +30,7 @@ public:
 		foodEatenCounter++;
 	}
 
-	int getFoodCounter() {
+	int getFoodCounter() const {
 		return foodEatenCounter;
 	}
 	point curr_pos;

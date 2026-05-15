@@ -19,6 +19,7 @@ namespace
 	const int kFeedingAreaCenterX = 170;
 	const int kFeedingAreaCenterY = (2 * config.toolBarHeight) + 145;
 	const int kFeedingAreaRadius = 95;
+	const unsigned long kFoodConsumeDelayMs = 650;
 	const char* kQuitUserName = "__QUIT__";
 	const char* kLeaderboardFileName = "leaderboard.txt";
 	const char* kSaveGameFileName = "savegame.txt";
@@ -29,6 +30,22 @@ namespace
 			firstPoint.x + firstWidth > secondPoint.x &&
 			firstPoint.y < secondPoint.y + secondHeight &&
 			firstPoint.y + firstHeight > secondPoint.y;
+	}
+
+	template <typename AnimalType>
+	bool feedCollidingAnimal(AnimalType* const* animalList, int animalCount, int animalWidth, int animalHeight, const point& foodPos, const std::string& animalName, Game* game)
+	{
+		for (int i = 0; i < animalCount; i++)
+		{
+			if (animalList[i] != nullptr && rectanglesOverlap(animalList[i]->getRefPoint(), animalWidth, animalHeight, foodPos, 50, 50))
+			{
+				animalList[i]->increaseFoodCounter();
+				game->printMessage(animalName + " ate! Total: " + std::to_string(animalList[i]->getFoodCounter()));
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	bool compareScoresDescending(const std::pair<std::string, int>& first, const std::pair<std::string, int>& second)
@@ -494,86 +511,62 @@ window* Game::CreateWind(int w, int h, int x, int y) const
 void Game::handleFeedingLogic()
 {
 	WaterIcon* waterIcon = gameBudgetbar->getWaterIcon();
+	unsigned long currentTick = GetTickCount();
 
-	
 	for (int j = 0; j < waterIcon->count; j++)
 	{
 		if (waterIcon->waterList[j] == nullptr) continue;
 
-		bool foodFinished = false;
-		point foodPos = waterIcon->waterList[j]->getRefPoint();
-
-		
-		ChickIcon* chickIcon = gameBudgetbar->getChickIcon();
-		for (int i = 0; i < chickIcon->count; i++) {
-			if (chickIcon->chickList[i] && rectanglesOverlap(chickIcon->chickList[i]->getRefPoint(), 50, 50, foodPos, 30, 30)) {
-				chickIcon->chickList[i]->increaseFoodCounter();
-				waterIcon->grassTileCounts[j]--;
-				printMessage("Chick ate! Total: " + to_string(chickIcon->chickList[i]->getFoodCounter()));
-				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
-			}
-		}
-		if (foodFinished) goto deleteFood;
-
-		
-		CowIcon* cowIcon = gameBudgetbar->getCowIcon();
-		for (int i = 0; i < cowIcon->count; i++) {
-			if (cowIcon->cowList[i] && rectanglesOverlap(cowIcon->cowList[i]->getRefPoint(), 60, 60, foodPos, 30, 30)) {
-				cowIcon->cowList[i]->increaseFoodCounter();
-				waterIcon->grassTileCounts[j]--;
-				printMessage("Cow ate! Total: " + to_string(cowIcon->cowList[i]->getFoodCounter()));
-				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
-			}
-		}
-		if (foodFinished) goto deleteFood;
-
-		
-		SheepIcon* sheepIcon = gameBudgetbar->getSheepIcon();
-		for (int i = 0; i < sheepIcon->count; i++) {
-			if (sheepIcon->sheepList[i] && rectanglesOverlap(sheepIcon->sheepList[i]->getRefPoint(), 55, 55, foodPos, 30, 30)) {
-				sheepIcon->sheepList[i]->increaseFoodCounter();
-				waterIcon->grassTileCounts[j]--;
-				printMessage("Sheep ate! Total: " + to_string(sheepIcon->sheepList[i]->getFoodCounter()));
-				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
-			}
-		}
-		if (foodFinished) goto deleteFood;
-
-		
-		GoatIcon* goatIcon = gameBudgetbar->getGoatIcon();
-		for (int i = 0; i < goatIcon->count; i++) {
-			if (goatIcon->goatList[i] && rectanglesOverlap(goatIcon->goatList[i]->getRefPoint(), 50, 50, foodPos, 30, 30)) {
-				goatIcon->goatList[i]->increaseFoodCounter();
-				waterIcon->grassTileCounts[j]--;
-				printMessage("Goat ate! Total: " + to_string(goatIcon->goatList[i]->getFoodCounter()));
-				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
-			}
-		}
-		if (foodFinished) goto deleteFood;
-
-		
-		DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
-		for (int i = 0; i < duckIcon->count; i++) {
-			if (duckIcon->duckList[i] && rectanglesOverlap(duckIcon->duckList[i]->getRefPoint(), 45, 45, foodPos, 30, 30)) {
-				duckIcon->duckList[i]->increaseFoodCounter();
-				waterIcon->grassTileCounts[j]--;
-				printMessage("Duck ate! Total: " + to_string(duckIcon->duckList[i]->getFoodCounter()));
-				if (waterIcon->grassTileCounts[j] <= 0) { foodFinished = true; break; }
-			}
-		}
-
-	deleteFood:
-		if (foodFinished)
+		if (waterIcon->grassTileCounts[j] <= 0)
 		{
 			delete waterIcon->waterList[j];
 			waterIcon->waterList[j] = waterIcon->waterList[waterIcon->count - 1];
 			waterIcon->grassTileCounts[j] = waterIcon->grassTileCounts[waterIcon->count - 1];
+			waterIcon->grassLastDecayTick[j] = waterIcon->grassLastDecayTick[waterIcon->count - 1];
 			waterIcon->waterList[waterIcon->count - 1] = nullptr;
 			waterIcon->count--;
-			j--; 
+			j--;
+			continue;
+		}
+
+		if (currentTick - waterIcon->grassLastDecayTick[j] < kFoodConsumeDelayMs)
+		{
+			continue;
+		}
+
+		point foodPos = waterIcon->waterList[j]->getRefPoint();
+		ChickIcon* chickIcon = gameBudgetbar->getChickIcon();
+		CowIcon* cowIcon = gameBudgetbar->getCowIcon();
+		SheepIcon* sheepIcon = gameBudgetbar->getSheepIcon();
+		GoatIcon* goatIcon = gameBudgetbar->getGoatIcon();
+		DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
+
+		bool animalAte =
+			feedCollidingAnimal(chickIcon->chickList, chickIcon->count, 50, 50, foodPos, "Chick", this) ||
+			feedCollidingAnimal(cowIcon->cowList, cowIcon->count, 50, 50, foodPos, "Cow", this) ||
+			feedCollidingAnimal(sheepIcon->sheepList, sheepIcon->count, 50, 50, foodPos, "Sheep", this) ||
+			feedCollidingAnimal(goatIcon->goatList, goatIcon->count, 50, 50, foodPos, "Goat", this) ||
+			feedCollidingAnimal(duckIcon->duckList, duckIcon->count, 50, 50, foodPos, "Duck", this);
+
+		if (!animalAte)
+		{
+			continue;
+		}
+
+		waterIcon->grassTileCounts[j]--;
+		waterIcon->grassLastDecayTick[j] = currentTick;
+
+		if (waterIcon->grassTileCounts[j] <= 0)
+		{
+			delete waterIcon->waterList[j];
+			waterIcon->waterList[j] = waterIcon->waterList[waterIcon->count - 1];
+			waterIcon->grassTileCounts[j] = waterIcon->grassTileCounts[waterIcon->count - 1];
+			waterIcon->grassLastDecayTick[j] = waterIcon->grassLastDecayTick[waterIcon->count - 1];
+			waterIcon->waterList[waterIcon->count - 1] = nullptr;
+			waterIcon->count--;
+			j--;
 		}
 	}
-
 }
 void Game::createToolbar() 
 {
@@ -735,7 +728,7 @@ bool Game::spendBudget(int amount)
 {
 	if (budget < amount)
 	{
-		printMessage("Not enough budget");
+		printMessage("Not enough budget: need $" + to_string(amount));
 		return false;
 	}
 
@@ -2193,6 +2186,8 @@ void Game::go()
 					handleProductClick(x, y);
 				}
 			}
+
+			pWind->UpdateBuffer();
 
 			if (isExit && pWind->IsOpen())
 			{

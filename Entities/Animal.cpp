@@ -181,15 +181,17 @@ int Animal::getRemainingProductSeconds() const
 void Animal::drawCounter() const
 {
 	int remainingSeconds = getRemainingProductSeconds();
-	if (remainingSeconds < 0)
+	window* pWind = pGame->getWind();
+	pWind->SetFont(12, BOLD, BY_NAME, "Arial");
+
+	if (remainingSeconds >= 0)
 	{
-		return;
+		pWind->SetPen(BLACK, 1);
+		pWind->DrawString(RefPoint.x + 8, RefPoint.y - 14, to_string(remainingSeconds));
 	}
 
-	window* pWind = pGame->getWind();
-	pWind->SetPen(BLACK, 1);
-	pWind->SetFont(12, BOLD, BY_NAME, "Arial");
-	pWind->DrawString(RefPoint.x + 8, RefPoint.y - 14, to_string(remainingSeconds));
+	pWind->SetPen(color(21, 102, 45), 1);
+	pWind->DrawString(RefPoint.x + 3, RefPoint.y + height + 2, "Food: " + to_string(foodEatenCounter));
 }
 
 void Animal::produceProduct()
@@ -267,6 +269,7 @@ void Wolf::moveStep()
 	moveInsideField(speedRange, 65);
 
 	draw();
+	drawCounter();
 }
 
 Dog::Dog(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
@@ -280,6 +283,7 @@ void Dog::moveStep()
 {
 	moveInsideField(3, 35);
 	draw();
+	drawCounter();
 	drawLifetimeCounter();
 }
 
@@ -331,6 +335,7 @@ void Dog::moveToward(point target)
 	}
 
 	draw();
+	drawCounter();
 	drawLifetimeCounter();
 }
 

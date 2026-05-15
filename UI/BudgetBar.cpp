@@ -53,7 +53,7 @@ namespace
 	{
 		if (currentCount >= max_budget_items)
 		{
-			game->printMessage("Placement limit reached for this item");
+			game->printMessage("Limit reached: max " + to_string(max_budget_items) + " of this item");
 			return false;
 		}
 		
@@ -477,12 +477,6 @@ void WaterIcon::updateAnimals()
 	{
 		if (waterList[i] != nullptr)
 		{
-			if (grassTileCounts[i] > 0 && animalsNearGrass(i) && currentTick - grassLastDecayTick[i] >= grass_consume_delay_ms)
-			{
-				grassTileCounts[i]--;
-				grassLastDecayTick[i] = currentTick;
-			}
-
 			if (grassTileCounts[i] <= 0)
 			{
 				delete waterList[i];
