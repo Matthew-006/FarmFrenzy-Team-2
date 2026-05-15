@@ -365,17 +365,17 @@ namespace
 		return true;
 	}
 }
-void PlayGameMusic() {
-	
+void PlayGameMusic() {	
 	while (true) {
 		
-		Beep(330, 300); Beep(330, 300); Beep(330, 600); // 
-		Beep(330, 300); Beep(330, 300); Beep(330, 600); // 
+		Beep(330, 300); Beep(330, 300); Beep(330, 600); 
+		Beep(330, 300); Beep(330, 300); Beep(330, 600); 
 		Beep(330, 300); Beep(392, 300); Beep(261, 300); Beep(293, 300); Beep(330, 600);
 
-		Sleep(500); // 
+		Sleep(500); 
 	}
 }
+
 
 Game::Game()
 {
