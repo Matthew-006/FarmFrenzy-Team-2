@@ -1395,7 +1395,7 @@ void Game::handleProductClick(int x, int y)
 	for (int i = 0; i < eggCount; i++)
 	{
 		if (eggList[i] != nullptr && eggList[i]->isClicked(x, y))
-		
+		{
 			warehouseEgg++;
 			delete eggList[i];
 			eggList[i] = eggList[eggCount - 1];
