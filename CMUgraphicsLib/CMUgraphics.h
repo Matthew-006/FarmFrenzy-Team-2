@@ -77,7 +77,7 @@ class window {
     WNDCLASS wndcWindow;
     HWND hwndWindow;
 
-    // Display Contexts - dcActive is always the DC we draw to
+    // play Contexts - dcActive is always the DC we draw to
     // dcScreen is the screen, and will be the same as dcActive
     // if we aren't using double buffering
     HDC dcActive;

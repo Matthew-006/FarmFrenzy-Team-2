@@ -11,6 +11,9 @@
 #include <windows.h>
 #include <mmsystem.h>
 #pragma comment(lib, "winmm.lib")
+#include <windows.h>   // ـ Beep
+#include <thread>      // in the background 
+#include <chrono>      
 namespace
 {
 	const int kFeedingAreaCenterX = 170;
@@ -345,10 +348,22 @@ namespace
 		return true;
 	}
 }
+void PlayGameMusic() {
+	
+	while (true) {
+		
+		Beep(330, 300); Beep(330, 300); Beep(330, 600); // 
+		Beep(330, 300); Beep(330, 300); Beep(330, 600); // 
+		Beep(330, 300); Beep(392, 300); Beep(261, 300); Beep(293, 300); Beep(330, 600);
+
+		Sleep(500); // 
+	}
+}
 
 Game::Game()
 {
-	
+	std::thread musicThread(PlayGameMusic);
+	musicThread.detach();
 	wolfCount = 0;
 	for (int i = 0; i < kMaxProducts; i++) {
 		wolfList[i] = nullptr;
@@ -1203,6 +1218,26 @@ void Game::DrawProducts() const
 		}
 	}
 }
+void Game::triggerGameOver() {
+	
+	PlaySound(TEXT("loser.wav"), NULL, SND_FILENAME | SND_ASYNC);
+
+	pWind->SetPen(RED, 5); // 
+	pWind->SetFont(80, BOLD, BY_NAME, "Arial"); 
+
+	
+	int xPos = config.windWidth / 2 - 200;
+	int yPos = config.windHeight / 2 - 50;
+
+	
+	pWind->DrawString(xPos, yPos, "GAME OVER");
+
+	
+	pWind->UpdateBuffer();
+
+	
+	Sleep(2000);
+}
 
 void Game::clearProducts()
 {
@@ -1360,7 +1395,7 @@ void Game::handleProductClick(int x, int y)
 	for (int i = 0; i < eggCount; i++)
 	{
 		if (eggList[i] != nullptr && eggList[i]->isClicked(x, y))
-		{
+		
 			warehouseEgg++;
 			delete eggList[i];
 			eggList[i] = eggList[eggCount - 1];
@@ -1850,6 +1885,7 @@ bool Game::addEgg(point location)
 	return true;
 }
 
+
 //for the warehouse 
 void Game::showWarehouseWindow()
 {
@@ -1877,6 +1913,7 @@ void Game::showWarehouseWindow()
 
 
 	bool clickedOutside = false;
+	//what keeps the new window open
 	while (!clickedOutside)
 	{
 
@@ -2011,6 +2048,24 @@ void Game::go()
 			updateTimer();
 			if (timer <= 0)
 			{
+				// --
+
+				// 
+				PlaySound(TEXT("loser.wav"), NULL, SND_FILENAME | SND_ASYNC);
+
+				pWind->SetPen(RED, 8);
+				pWind->SetFont(80, BOLD, BY_NAME, "Arial");
+
+				
+				pWind->DrawString(config.windWidth / 2 - 200, config.windHeight / 2 - 50, "GAME OVER");
+
+				// 4. 
+				pWind->UpdateBuffer();
+
+				Sleep(2000);
+
+				
+
 				GameOverChoice choice = handleGameOver();
 				if (choice == PLAY_AGAIN)
 				{

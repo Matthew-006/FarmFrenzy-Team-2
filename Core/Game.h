@@ -73,7 +73,8 @@ private:
 	void resetGameState();
 
 public:
-
+	void playInternalMusic();
+	void triggerGameOver();
 	void setTimerByLevel();
 	void checkLevelUp();
 	void showWarehouseWindow();
