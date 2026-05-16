@@ -1,33 +1,47 @@
-LEVEL 1    // Current level
-BUDGET 1400    // Current player budget
-SCORE 0    // Current player score from sold products
-TIMER 80    // Remaining time in seconds
-GOAL 700    // Level goal
+LEVEL 6    // Current level
+BUDGET 640    // Current player budget
+SCORE 3940    // Current player score from sold products
+TIMER 184    // Remaining time in seconds
+GOAL 4700    // Level goal
 PAUSED 0    // 1 if game is paused, 0 otherwise
 USERNAME Matthew    // Current player name
 
-ANIMALS 6    // Number of saved animals
+ANIMALS 46    // Number of saved animals
 // TYPE X Y DX DY COUNTER    Animal type, position, velocity, and movement counter
-COW 192 244 -1 1 150
-GOAT 267 361 -1 -2 184
-SHEEP 618 351 -1 -1 196
-SHEEP 773 161 -1 -1 63
-SHEEP 497 397 1 2 56
-DUCK 92 385 -3 2 211
+COW 447 293 1 -1 6511
+GOAT 592 291 -2 -1 3049
+SHEEP 873 337 -1 1 1868
+SHEEP 220 425 1 -1 1856
+SHEEP 24 345 -1 -1 1852
 
-WOLVES 1    // Number of alive wolves
+WOLVES 2    // Number of alive wolves
 // WOLF X Y DX DY COUNTER    Wolf label, position, velocity, and movement counter
-WOLF 432 190 1 -1 90
+WOLF 601 144 2 1 164
+WOLF 378 192 1 -2 76
 
 FOODAREAS 0    // Number of active food areas
 // FOOD X Y COUNT    Food label, position, and remaining food tile count
 
 WAREHOUSE    // Start of warehouse data
 EGGS 0    // Eggs stored in warehouse
-MILK 0    // Milk bottles stored in warehouse
-WOOL 0    // Wool stored in warehouse
+MILK 8    // Milk bottles stored in warehouse
+WOOL 2    // Wool stored in warehouse
 
 PRODUCTS    // Products still on the field
 EGGS 0
-MILK 0
-WOOL 0
+MILK 2
+MILK 474 349
+MILK 885 367
+WOOL 12
+WOOL 175 425
+WOOL 45 268
+WOOL 155 275
+WOOL 251 497
+WOOL 82 434
+WOOL 925 498
+WOOL 104 208
+WOOL 922 458
+WOOL 125 349
+WOOL 120 380
+WOOL 146 490
+WOOL 125 425
