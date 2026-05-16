@@ -17,6 +17,12 @@ protected:
 	bool shouldSkipMovementFrame();
 
 private:
+
+	int happiness;            
+	unsigned long long lastHappinessTick; 
+	const int maxHappiness = 100;
+
+
 	string image_path;
 	image sprite;
 	bool imageLoaded;
@@ -29,6 +35,15 @@ private:
 	int foodEatenCounter;
 	bool productProducedThisStep;
 public:
+
+
+
+	void decreaseHappiness(int amount);
+	void increaseHappiness(int amount);
+	int getHappiness() const { return happiness; }
+
+	
+	void updateHappiness();
 	void increaseFoodCounter() {
 		foodEatenCounter++;
 	}

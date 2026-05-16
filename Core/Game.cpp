@@ -65,7 +65,11 @@ namespace
 			if (animalList[i] != nullptr && rectanglesOverlap(animalList[i]->getRefPoint(), animalWidth, animalHeight, foodPos, 50, 50))
 			{
 				animalList[i]->increaseFoodCounter();
+				animalList[i]->increaseHappiness(20);
 				game->printMessage(animalName + " ate! Total: " + std::to_string(animalList[i]->getFoodCounter()));
+
+				animalList[i]->increaseFoodCounter();
+				animalList[i]->increaseHappiness(20);
 				return true;
 			}
 		}
