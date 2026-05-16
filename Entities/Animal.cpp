@@ -224,12 +224,8 @@ bool Animal::isProductReady()
 	}
 
 	unsigned long long currentTick = GetTickCount64();
-
-	// بنشيك لو الفارق بين دلوقتي وأخر مرة أنتج فيها أكبر من أو بيساوي الـ 10 ثواني
 	if (currentTick - lastProductTick >= static_cast<unsigned long long>(productIntervalMs))
 	{
-		// ⚠️ السطر ده هو السر: بنخلي وقت أخر إنتاج هو "دلوقتي حالا"
-		// فبالتالي الفارق يرجع 0، والـ if دي تقفل ومتفتحش تاني غير بعد 10 ثواني كاملين!
 		lastProductTick = currentTick;
 		return true;
 	}
@@ -266,7 +262,7 @@ void Animal::drawCounter() const
 		pWind->SetPen(BLACK, 1);
 		pWind->DrawString(RefPoint.x + 8, RefPoint.y - 14, to_string(remainingSeconds));
 	}
-	pWind->SetPen(happiness > 20 ? color(0, 0, 255) : color(255, 0, 0), 1); // أزرق لو سعيد، أحمر لو حزين جداً
+	pWind->SetPen(happiness > 20 ? color(0, 0, 255) : color(255, 0, 0), 1);
 	string happinessText = "Happy: " + to_string(happiness) + "% " + (happiness <= 0 ? "CS" : " ");
 	pWind->DrawString(RefPoint.x + 3, RefPoint.y + height + 14, happinessText);
 
