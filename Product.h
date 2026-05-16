@@ -17,8 +17,11 @@ public:
 
 class Egg : public Product
 {
+private:
+	bool isGoldenEgg;
 public:
-	Egg(Game* r_pGame, point r_point);
+	Egg(Game* r_pGame, point r_point, bool is_gold = false);
+	bool isGolden() const { return isGoldenEgg; }
 };
 
 class Milk : public Product

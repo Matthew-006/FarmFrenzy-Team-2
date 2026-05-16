@@ -208,8 +208,22 @@ void ChickIcon::updateAnimals()
 {
 	for (int i = 0; i < count; i++)
 	{
-		if (chickList[i] != nullptr)
-			chickList[i]->moveStep();
+		if (chickList[i] == nullptr)
+		{
+			continue;
+		}
+
+		chickList[i]->resetProductProducedThisStep();
+		chickList[i]->moveStep();
+
+		if (chickList[i]->isGoldenAnimal() && chickList[i]->didProduceProductThisStep())
+		{
+			delete chickList[i];
+			chickList[i] = chickList[count - 1];
+			chickList[count - 1] = nullptr;
+			count--;
+			i--;
+		}
 	}
 }
 

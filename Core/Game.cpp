@@ -339,6 +339,7 @@ Game::Game()
 	soundMuted = false;
 	helperActive = false;
 	helperFarmer = nullptr;
+	goldenChickSpawned = false;
 	lastTime = GetTickCount64();
 
 	//1 - Create the main window
@@ -1490,7 +1491,15 @@ void Game::handleProductClick(int x, int y)
 	{
 		if (eggList[i] != nullptr && eggList[i]->isClicked(x, y))
 		{
-			warehouseEgg++;
+			if (eggList[i]->isGolden())
+			{
+				spendBudget(-1000);
+			}
+			else
+			{
+				warehouseEgg++;
+				spendBudget(-100);
+			}
 			delete eggList[i];
 			eggList[i] = eggList[eggCount - 1];
 			eggList[eggCount - 1] = nullptr;
@@ -1608,6 +1617,7 @@ void Game::resetGameState()
 	warehouseEgg = 0;
 	warehouseMilk = 0;
 	warehouseWool = 0;
+	goldenChickSpawned = false;
 	helperActive = false;
 	delete helperFarmer;
 	helperFarmer = nullptr;
@@ -1968,7 +1978,7 @@ void Game::loadGame()
 	printMessage("Game loaded from " + saveFileName);
 }
 
-bool Game::addEgg(point location)
+bool Game::addEgg(point location, bool is_gold)
 {
 	if (!findFreeProductSpot(location, 30, 30))
 	{
@@ -1980,7 +1990,7 @@ bool Game::addEgg(point location)
 		return false;
 	}
 
-	eggList[eggCount] = new Egg(this, location);
+	eggList[eggCount] = new Egg(this, location,is_gold);
 	eggCount++;
 	return true;
 }
@@ -2267,6 +2277,20 @@ void Game::go()
 				}
 			}
 			
+			if (!goldenChickSpawned && (eggCount+warehouseEgg) >= 15)
+			{
+				point spawnPoint = { 400, 300 };
+				ChickIcon* chikIcon = gameBudgetbar->getChickIcon();
+
+				if (chikIcon != nullptr && chikIcon->count < max_budget_items)
+				{
+					Chick* goldenChick = new Chick(this, spawnPoint, 50, 50, "images\\chick (3).JPEG", true);
+					chikIcon->chickList[chikIcon->count++] = goldenChick;
+					goldenChick->draw();
+					printMessage("Golden chick appeared!");
+					goldenChickSpawned = true;
+				}
+			}
 			gameBudgetbar->updateAnimals();
 			animals = gameBudgetbar->getAnimalCount();
 			updateStatusBar();
@@ -2339,4 +2363,8 @@ void Game::showRandomWolf() {
 		wolfList[wolfCount] = new Wolf(this, p, 50, 50, "images\\wolf.JPEG");
 		wolfCount++;
 	}
+}
+void Game::setEggCount(int count)
+{
+	eggCount = count;
 }

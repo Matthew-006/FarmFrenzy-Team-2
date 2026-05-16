@@ -73,10 +73,11 @@ namespace
 	}
 }
 
-Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Drawable(r_pGame, r_point, r_width, r_height)
+Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_path, bool is_gold) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	image_path = img_path;
 	imageLoaded = false;
+	isGolden = is_gold;
 	if (!image_path.empty())
 	{
 		image_path = resolveAssetPath(image_path);
@@ -101,6 +102,7 @@ Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string i
 	productIntervalMs = 0;
 	productType = PRODUCT_NONE;
 	foodEatenCounter = 0;
+	productProducedThisStep = false;
 }
 
 bool Animal::shouldSkipMovementFrame()
@@ -208,13 +210,17 @@ bool Animal::isProductReady()
 	}
 
 	unsigned long long currentTick = GetTickCount64();
-	if (currentTick - lastProductTick < static_cast<unsigned long long>(productIntervalMs))
+
+	// بنشيك لو الفارق بين دلوقتي وأخر مرة أنتج فيها أكبر من أو بيساوي الـ 10 ثواني
+	if (currentTick - lastProductTick >= static_cast<unsigned long long>(productIntervalMs))
 	{
-		return false;
+		// ⚠️ السطر ده هو السر: بنخلي وقت أخر إنتاج هو "دلوقتي حالا"
+		// فبالتالي الفارق يرجع 0، والـ if دي تقفل ومتفتحش تاني غير بعد 10 ثواني كاملين!
+		lastProductTick = currentTick;
+		return true;
 	}
 
-	lastProductTick = currentTick;
-	return true;
+	return false;
 }
 
 int Animal::getRemainingProductSeconds() const
@@ -250,29 +256,49 @@ void Animal::drawCounter() const
 	pWind->SetPen(color(21, 102, 45), 1);
 	pWind->DrawString(RefPoint.x + 3, RefPoint.y + height + 2, "Food: " + to_string(foodEatenCounter));
 }
+bool Animal::isGoldenAnimal() const
+{
+	return isGolden;
+}
+
+bool Animal::didProduceProductThisStep() const
+{
+	return productProducedThisStep;
+}
+
+void Animal::resetProductProducedThisStep()
+{
+	productProducedThisStep = false;
+}
 
 void Animal::produceProduct()
 {
+	productProducedThisStep = false;
 	point productPoint;
 	productPoint.x = RefPoint.x + (width / 2);
 	productPoint.y = RefPoint.y + height;
 
 	if (productType == PRODUCT_EGG)
 	{
-		pGame->addEgg(productPoint);
+		productProducedThisStep = pGame->addEgg(productPoint, isGolden);
 	}
 	else if (productType == PRODUCT_MILK)
 	{
-		pGame->addMilk(productPoint);
+		productProducedThisStep = pGame->addMilk(productPoint);
 	}
 	else if (productType == PRODUCT_WOOL)
 	{
-		pGame->addWool(productPoint);
+		productProducedThisStep = pGame->addWool(productPoint);
 	}
 }
 
-Chick::Chick(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
+Chick::Chick(Game* r_pGame, point r_point, int r_width, int r_height, string img_path,bool is_gold) : Animal(r_pGame, r_point, r_width, r_height, img_path,is_gold)
 {
+	if (isGolden)
+	{
+		this->setDx(this->getDx() * 3);
+		this->setDy(this->getDy() * 3);
+	}
 	setProductIntervalMs(10000);
 	setProductType(PRODUCT_EGG);
 }

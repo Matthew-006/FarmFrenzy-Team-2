@@ -64,9 +64,10 @@ bool Product::isClicked(int x, int y) const
 		y >= RefPoint.y && y <= RefPoint.y + height;
 }
 
-Egg::Egg(Game* r_pGame, point r_point)
-	: Product(r_pGame, r_point, 30, 30, "images\\egg.jpg")
+Egg::Egg(Game* r_pGame, point r_point, bool is_gold)
+	: Product(r_pGame, r_point, 30, 30, is_gold ? "images\\golden_egg.jpg" : "images\\egg.jpg")
 {
+	isGoldenEgg = is_gold;
 }
 
 Milk::Milk(Game* r_pGame, point r_point)

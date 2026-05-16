@@ -4,6 +4,7 @@
 class Animal :public Drawable
 {
 protected:
+	bool isGolden;
 	enum ProductType
 	{
 		PRODUCT_NONE,
@@ -26,6 +27,7 @@ private:
 	int productIntervalMs;
 	ProductType productType;
 	int foodEatenCounter;
+	bool productProducedThisStep;
 public:
 	void increaseFoodCounter() {
 		foodEatenCounter++;
@@ -36,7 +38,7 @@ public:
 	}
 	point curr_pos;
 	point curr_vel;
-	Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
+	Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_pathbool,bool is_gold = false);
 	virtual void draw() const override;
 	virtual void moveStep() = 0;   //The action that should be taken each time step
 
@@ -53,13 +55,17 @@ public:
 	int getRemainingProductSeconds() const;
 	void drawCounter() const;
 	void produceProduct();
+	bool isGoldenAnimal() const;
+	bool didProduceProductThisStep() const;
+	void resetProductProducedThisStep();
+	
 };
  
 
 class Chick : public Animal
 {
 public:
-	Chick(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
+	Chick(Game* r_pGame, point r_point, int r_width, int r_height, string img_path, bool is_gold = false);
 	virtual void moveStep();
 };
 

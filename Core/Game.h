@@ -39,6 +39,7 @@ private:
 	int eggCount;
 	int milkCount;
 	int woolCount;
+	bool goldenChickSpawned;
 	int warehouseEgg;
 	int warehouseMilk;
 	int warehouseWool;
@@ -115,9 +116,10 @@ public:
 	void resumeGame();
 	void saveGame() const;
 	void loadGame();
-	bool addEgg(point location);
+	bool addEgg(point location, bool is_gold = false);
 	bool addMilk(point location);
 	bool addWool(point location);
+	void setEggCount(int count);
 	int getLevel() const;
 	bool getNearestWolfPoint(point fromPoint, point& wolfPoint) const;
 	bool removeWolfAt(point dogPoint, int dogWidth, int dogHeight);
