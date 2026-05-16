@@ -1,0 +1,33 @@
+LEVEL 1    // Current level
+BUDGET 1400    // Current player budget
+SCORE 0    // Current player score from sold products
+TIMER 80    // Remaining time in seconds
+GOAL 700    // Level goal
+PAUSED 0    // 1 if game is paused, 0 otherwise
+USERNAME Matthew    // Current player name
+
+ANIMALS 6    // Number of saved animals
+// TYPE X Y DX DY COUNTER    Animal type, position, velocity, and movement counter
+COW 192 244 -1 1 150
+GOAT 267 361 -1 -2 184
+SHEEP 618 351 -1 -1 196
+SHEEP 773 161 -1 -1 63
+SHEEP 497 397 1 2 56
+DUCK 92 385 -3 2 211
+
+WOLVES 1    // Number of alive wolves
+// WOLF X Y DX DY COUNTER    Wolf label, position, velocity, and movement counter
+WOLF 432 190 1 -1 90
+
+FOODAREAS 0    // Number of active food areas
+// FOOD X Y COUNT    Food label, position, and remaining food tile count
+
+WAREHOUSE    // Start of warehouse data
+EGGS 0    // Eggs stored in warehouse
+MILK 0    // Milk bottles stored in warehouse
+WOOL 0    // Wool stored in warehouse
+
+PRODUCTS    // Products still on the field
+EGGS 0
+MILK 0
+WOOL 0

@@ -955,6 +955,7 @@ void Budgetbar::draw() const
 	{
 		iconsList[i]->draw();
 	}
+	drawPrices();
 
 	window* pWind = pGame->getWind();
 	pWind->SetPen(BLACK, 3);
@@ -964,16 +965,17 @@ void Budgetbar::draw() const
 void Budgetbar::drawPrices() const
 {
 	window* pWind = pGame->getWind();
-	const int labelTop = (2 * config.toolBarHeight) + 2;
+	const int labelTop = (2 * config.toolBarHeight) + 4;
 	for (int i = 0; i < ANIMAL_COUNT; i++)
 	{
 		const int left = i * config.iconWidth;
+		const string priceText = "$" + to_string(getIconPrice(i));
 		pWind->SetPen(BLACK, 1);
 		pWind->SetBrush(color(248, 239, 214));
-		pWind->DrawRectangle(left + 8, labelTop, left + config.iconWidth - 8, labelTop + 16, FILLED, 4, 4);
+		pWind->DrawRectangle(left + 10, labelTop, left + config.iconWidth - 10, labelTop + 17, FILLED, 4, 4);
 		pWind->SetPen(color(26, 78, 36), 1);
 		pWind->SetFont(11, BOLD, BY_NAME, "Arial");
-		pWind->DrawString(left + 20, labelTop + 1, "$" + to_string(getIconPrice(i)));
+		pWind->DrawString(left + 18, labelTop + 2, priceText);
 	}
 }
 

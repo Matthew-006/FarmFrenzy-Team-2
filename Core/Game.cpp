@@ -21,7 +21,33 @@ namespace
 	const unsigned long long kHelperDurationMs = 60000;
 	const char* kQuitUserName = "__QUIT__";
 	const char* kLeaderboardFileName = "leaderboard.txt";
-	const char* kSaveGameFileName = "savegame.txt";
+	const char* kLegacySaveGameFileName = "savegame.txt";
+
+	std::string makeSaveGameFileName(const std::string& playerName)
+	{
+		std::string safeName;
+		for (size_t i = 0; i < playerName.size(); i++)
+		{
+			const char ch = playerName[i];
+			const bool isLetter = (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
+			const bool isDigit = ch >= '0' && ch <= '9';
+			if (isLetter || isDigit)
+			{
+				safeName += ch;
+			}
+			else if (!safeName.empty() && safeName[safeName.size() - 1] != '_')
+			{
+				safeName += '_';
+			}
+		}
+
+		if (safeName.empty())
+		{
+			safeName = "Player";
+		}
+
+		return "savegame_" + safeName + ".txt";
+	}
 
 	bool rectanglesOverlap(const point& firstPoint, int firstWidth, int firstHeight, const point& secondPoint, int secondWidth, int secondHeight)
 	{
@@ -608,6 +634,11 @@ void Game::drawFoodArea() const
 	pWind->SetPen(DARKGREEN, 2);
 	pWind->SetFont(20, BOLD, BY_NAME, "Arial");
 	pWind->DrawString(25, fieldTop + 10, "Feeding Area");
+
+	if (gameBudgetbar != nullptr)
+	{
+		gameBudgetbar->drawPrices();
+	}
 }
 
 
@@ -1598,7 +1629,8 @@ void Game::resumeGame()
 
 void Game::saveGame() const
 {
-	std::ofstream output(kSaveGameFileName);
+	const std::string saveFileName = makeSaveGameFileName(username);
+	std::ofstream output(saveFileName.c_str());
 	if (!output)
 	{
 		printMessage("Could not save game");
@@ -1669,15 +1701,23 @@ void Game::saveGame() const
 		return;
 	}
 
-	printMessage("Game saved to savegame.txt");
+	printMessage("Game saved to " + saveFileName);
 }
 
 void Game::loadGame()
 {
-	std::ifstream input(kSaveGameFileName);
+	std::string saveFileName = makeSaveGameFileName(username);
+	std::ifstream input(saveFileName.c_str());
 	if (!input)
 	{
-		printMessage("No savegame.txt found");
+		input.clear();
+		saveFileName = kLegacySaveGameFileName;
+		input.open(saveFileName.c_str());
+	}
+
+	if (!input)
+	{
+		printMessage("No saved game found for " + username);
 		return;
 	}
 
@@ -1728,14 +1768,9 @@ void Game::loadGame()
 		return;
 	}
 
-	clearProducts();
-	clearWolves();
-	gameBudgetbar->resetAnimals();
-
 	std::string line;
 	if (!readDataLine(input, line))
 	{
-		resetGameState();
 		printMessage("Save file is not valid");
 		return;
 	}
@@ -1745,7 +1780,6 @@ void Game::loadGame()
 	usernameParser >> usernameLabel;
 	if (!usernameParser || usernameLabel != "USERNAME")
 	{
-		resetGameState();
 		printMessage("Save file is not valid");
 		return;
 	}
@@ -1753,7 +1787,16 @@ void Game::loadGame()
 	std::getline(usernameParser, loadedUsername);
 	loadedUsername = trimCopy(loadedUsername);
 
-	username = loadedUsername;
+	if (loadedUsername != username)
+	{
+		printMessage("This save belongs to " + loadedUsername);
+		return;
+	}
+
+	clearProducts();
+	clearWolves();
+	gameBudgetbar->resetAnimals();
+
 	budget = loadedBudget;
 	isPaused = (loadedPaused != 0);
 	timer = loadedTimer;
@@ -1768,7 +1811,6 @@ void Game::loadGame()
 
 	if (!readLabelIntLine(input, "ANIMALS", loadedAnimals) || loadedAnimals < 0)
 	{
-		resetGameState();
 		printMessage("Save file is not valid");
 		return;
 	}
@@ -1784,7 +1826,6 @@ void Game::loadGame()
 	{
 		if (!readDataLine(input, line))
 		{
-			resetGameState();
 			printMessage("Save file is not valid");
 			return;
 		}
@@ -1816,7 +1857,6 @@ void Game::loadGame()
 
 		if (!loaded)
 		{
-			resetGameState();
 			printMessage("Save file is not valid");
 			return;
 		}
@@ -1824,7 +1864,6 @@ void Game::loadGame()
 
 	if (!readLabelIntLine(input, "WOLVES", wolfCount) || wolfCount < 0 || wolfCount > kMaxProducts)
 	{
-		resetGameState();
 		printMessage("Save file is not valid");
 		return;
 	}
@@ -1833,7 +1872,6 @@ void Game::loadGame()
 	{
 		if (!readDataLine(input, line))
 		{
-			resetGameState();
 			printMessage("Save file is not valid");
 			return;
 		}
@@ -1841,7 +1879,6 @@ void Game::loadGame()
 		int loadedWolfCount = i;
 		if (!loadAnimalRow(line, "WOLF", wolfList, loadedWolfCount, kMaxProducts, this, "images\\wolf.jpg"))
 		{
-			resetGameState();
 			printMessage("Save file is not valid");
 			return;
 		}
@@ -1849,7 +1886,6 @@ void Game::loadGame()
 
 	if (!readLabelIntLine(input, "FOODAREAS", waterIcon->count) || waterIcon->count < 0 || waterIcon->count > max_budget_items)
 	{
-		resetGameState();
 		printMessage("Save file is not valid");
 		return;
 	}
@@ -1860,7 +1896,6 @@ void Game::loadGame()
 		std::string foodLabel;
 		if (!readDataLine(input, line))
 		{
-			resetGameState();
 			printMessage("Save file is not valid");
 			return;
 		}
@@ -1869,7 +1904,6 @@ void Game::loadGame()
 		foodParser >> foodLabel >> p.x >> p.y >> waterIcon->grassTileCounts[i];
 		if (!foodParser || foodLabel != "FOOD" || waterIcon->grassTileCounts[i] < 0 || waterIcon->grassTileCounts[i] > grass_tiles_per_water)
 		{
-			resetGameState();
 			printMessage("Save file is not valid");
 			return;
 		}
@@ -1882,7 +1916,6 @@ void Game::loadGame()
 			std::string grassLabel;
 			if (!readDataLine(input, line))
 			{
-				resetGameState();
 				printMessage("Save file is not valid");
 				return;
 			}
@@ -1891,7 +1924,6 @@ void Game::loadGame()
 			grassParser >> grassLabel >> waterIcon->grassTiles[i][j].x >> waterIcon->grassTiles[i][j].y;
 			if (!grassParser || grassLabel != "GRASS")
 			{
-				resetGameState();
 				printMessage("Save file is not valid");
 				return;
 			}
@@ -1907,7 +1939,6 @@ void Game::loadGame()
 		!readTypedProductList(input, "MILK", "MILK", milkList, milkCount, kMaxProducts, this) ||
 		!readTypedProductList(input, "WOOL", "WOOL", woolList, woolCount, kMaxProducts, this))
 	{
-		resetGameState();
 		printMessage("Save file is not valid");
 		return;
 	}
@@ -1934,7 +1965,7 @@ void Game::loadGame()
 	}
 	updateStatusBar();
 	printBudget("BUDGET = $" + to_string(budget));
-	printMessage("Game loaded from savegame.txt");
+	printMessage("Game loaded from " + saveFileName);
 }
 
 bool Game::addEgg(point location)

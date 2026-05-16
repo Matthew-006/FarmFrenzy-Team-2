@@ -56,6 +56,21 @@ namespace
 
 		return path;
 	}
+
+	int stepToward(int distance, int maxStep)
+	{
+		if (distance > maxStep)
+		{
+			return maxStep;
+		}
+
+		if (distance < -maxStep)
+		{
+			return -maxStep;
+		}
+
+		return distance;
+	}
 }
 
 Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Drawable(r_pGame, r_point, r_width, r_height)
@@ -338,42 +353,33 @@ void Dog::moveToward(point target)
 	const int targetCenterY = target.y + 25;
 	const int chaseSpeed = 6;
 
-	if (targetCenterX > dogCenterX)
-	{
-		setDx(chaseSpeed);
-	}
-	else if (targetCenterX < dogCenterX)
-	{
-		setDx(-chaseSpeed);
-	}
-	else
-	{
-		setDx(0);
-	}
+	setDx(stepToward(targetCenterX - dogCenterX, chaseSpeed));
+	setDy(stepToward(targetCenterY - dogCenterY, chaseSpeed));
 
-	if (targetCenterY > dogCenterY)
-	{
-		setDy(chaseSpeed);
-	}
-	else if (targetCenterY < dogCenterY)
-	{
-		setDy(-chaseSpeed);
-	}
-	else
-	{
-		setDy(0);
-	}
-
-	point oldPoint = RefPoint;
 	RefPoint.x += getDx();
 	RefPoint.y += getDy();
 
-	if (RefPoint.x < config.fieldPadding ||
-		RefPoint.y < (2 * config.toolBarHeight) + config.fieldPadding ||
-		RefPoint.x > config.windWidth - config.fieldPadding - width ||
-		RefPoint.y > config.windHeight - config.statusBarHeight - config.fieldPadding - height)
+	const int minX = config.fieldPadding;
+	const int minY = (2 * config.toolBarHeight) + config.fieldPadding;
+	const int maxX = config.windWidth - config.fieldPadding - width;
+	const int maxY = config.windHeight - config.statusBarHeight - config.fieldPadding - height;
+
+	if (RefPoint.x < minX)
 	{
-		RefPoint = oldPoint;
+		RefPoint.x = minX;
+	}
+	else if (RefPoint.x > maxX)
+	{
+		RefPoint.x = maxX;
+	}
+
+	if (RefPoint.y < minY)
+	{
+		RefPoint.y = minY;
+	}
+	else if (RefPoint.y > maxY)
+	{
+		RefPoint.y = maxY;
 	}
 
 	draw();
@@ -429,42 +435,33 @@ void Farmer::moveToward(point target)
 	const int targetCenterY = target.y + 20;
 	const int walkSpeed = 5;
 
-	if (targetCenterX > farmerCenterX)
-	{
-		setDx(walkSpeed);
-	}
-	else if (targetCenterX < farmerCenterX)
-	{
-		setDx(-walkSpeed);
-	}
-	else
-	{
-		setDx(0);
-	}
+	setDx(stepToward(targetCenterX - farmerCenterX, walkSpeed));
+	setDy(stepToward(targetCenterY - farmerCenterY, walkSpeed));
 
-	if (targetCenterY > farmerCenterY)
-	{
-		setDy(walkSpeed);
-	}
-	else if (targetCenterY < farmerCenterY)
-	{
-		setDy(-walkSpeed);
-	}
-	else
-	{
-		setDy(0);
-	}
-
-	point oldPoint = RefPoint;
 	RefPoint.x += getDx();
 	RefPoint.y += getDy();
 
-	if (RefPoint.x < config.fieldPadding ||
-		RefPoint.y < (2 * config.toolBarHeight) + config.fieldPadding ||
-		RefPoint.x > config.windWidth - config.fieldPadding - width ||
-		RefPoint.y > config.windHeight - config.statusBarHeight - config.fieldPadding - height)
+	const int minX = config.fieldPadding;
+	const int minY = (2 * config.toolBarHeight) + config.fieldPadding;
+	const int maxX = config.windWidth - config.fieldPadding - width;
+	const int maxY = config.windHeight - config.statusBarHeight - config.fieldPadding - height;
+
+	if (RefPoint.x < minX)
 	{
-		RefPoint = oldPoint;
+		RefPoint.x = minX;
+	}
+	else if (RefPoint.x > maxX)
+	{
+		RefPoint.x = maxX;
+	}
+
+	if (RefPoint.y < minY)
+	{
+		RefPoint.y = minY;
+	}
+	else if (RefPoint.y > maxY)
+	{
+		RefPoint.y = maxY;
 	}
 
 	draw();
