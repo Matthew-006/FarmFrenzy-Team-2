@@ -78,7 +78,7 @@ private:
 	void saveLeaderboard(const std::vector<std::pair<std::string, int>>& leaderboard) const;
 	void updateLeaderboard(int score);
 	void resetGameState();
-
+	int lastMilestoneBudget;
 public:
 	void playInternalMusic();
 	void triggerGameOver();
@@ -132,5 +132,6 @@ public:
 	window* getWind() const;		//returns a pointer to the graphics window
 	Budgetbar* getBudgetbar() const;
 	void handleFeedingLogic();
+	void checkBudgetMilestone();
 };
 

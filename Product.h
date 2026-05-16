@@ -8,8 +8,11 @@ protected:
 	std::string image_path;
 	image sprite;
 	bool imageLoaded;
-
+	unsigned long long spawnTick;
+	static const unsigned long long expiryMs = 30000; 
 public:
+	bool isExpired() const;
+	int getRemainingSeconds() const;
 	Product(Game* r_pGame, point r_point, int r_width, int r_height, std::string img_path);
 	virtual void draw() const override;
 	bool isClicked(int x, int y) const;

@@ -332,6 +332,7 @@ Game::Game()
 	}
 
 	budget = kStartingBudget;
+	lastMilestoneBudget = 0;
 	isPaused = false;
 	timer = 90;
 	level = 1;
@@ -1585,6 +1586,7 @@ void Game::sellWarehouseProduct(int& productCount, int price, const std::string&
 
 	productCount--;
 	budget += price;
+	checkBudgetMilestone();
 	score += price;
 	printBudget("BUDGET = $" + to_string(budget));
 	drawWarehouse();
@@ -2118,6 +2120,30 @@ bool Game::getNearestWolfPoint(point fromPoint, point& wolfPoint) const
 
 	return foundWolf;
 }
+void Game::checkBudgetMilestone()
+{
+	const int milestones[] = { 1000, 2000, 3000, 5000, 10000 };
+	const int milestoneCount = 5;
+
+	for (int i = 0; i < milestoneCount; i++)
+	{
+		if (budget >= milestones[i] && lastMilestoneBudget < milestones[i])
+		{
+			lastMilestoneBudget = milestones[i];
+
+			pWind->SetPen(color(37, 92, 48), 1);
+			pWind->SetFont(36, BOLD, BY_NAME, "Arial");
+			pWind->DrawString(
+				config.windWidth / 2 - 200,
+				config.windHeight / 2 - 30,
+				"Budget Milestone: $" + to_string(milestones[i]) + "!"
+			);
+			pWind->UpdateBuffer();
+			Sleep(2000);
+			break;
+		}
+	}
+}
 
 bool Game::removeWolfAt(point dogPoint, int dogWidth, int dogHeight)
 {
@@ -2206,6 +2232,46 @@ void Game::go()
 			handleFeedingLogic();
 			drawFoodArea();
 			DrawProducts();
+			DrawProducts();
+
+			for (int i = 0; i < eggCount; i++)
+			{
+				if (eggList[i] != nullptr && eggList[i]->isExpired())
+				{
+					delete eggList[i];
+					eggList[i] = eggList[eggCount - 1];
+					eggList[eggCount - 1] = nullptr;
+					eggCount--;
+					i--;
+					printMessage("An egg expired!");
+				}
+			}
+
+			for (int i = 0; i < milkCount; i++)
+			{
+				if (milkList[i] != nullptr && milkList[i]->isExpired())
+				{
+					delete milkList[i];
+					milkList[i] = milkList[milkCount - 1];
+					milkList[milkCount - 1] = nullptr;
+					milkCount--;
+					i--;
+					printMessage("Milk expired!");
+				}
+			}
+
+			for (int i = 0; i < woolCount; i++)
+			{
+				if (woolList[i] != nullptr && woolList[i]->isExpired())
+				{
+					delete woolList[i];
+					woolList[i] = woolList[woolCount - 1];
+					woolList[woolCount - 1] = nullptr;
+					woolCount--;
+					i--;
+					printMessage("Wool expired!");
+				}
+			}
 			updateHelper();
 			showRandomWolf();
 			for (int i = 0; i < wolfCount; i++) {
