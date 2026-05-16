@@ -615,9 +615,9 @@ void Animal::increaseHappiness(int amount) {
 
 void Animal::updateHappiness() {
 	unsigned long long currentTick = GetTickCount64();
-	
+
 	if (currentTick - lastHappinessTick >= 15000) {
 		decreaseHappiness(5);
-		lastHappinessTick = currentTick; 
+		lastHappinessTick = currentTick;
+	}
 }
-
