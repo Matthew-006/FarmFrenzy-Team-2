@@ -14,6 +14,7 @@ const int grass_tiles_per_water = 8;
 const int max_budget_items = 15;
 const int animal_cost = 100;
 const int dog_cost = 500;
+const int helper_cost = 1000;
 
 //Base class for all toolbar icons 
 class BudgetbarIcon :public Drawable
@@ -23,6 +24,7 @@ private:
 public:
 	string image_path;
 	image iconImage;
+	bool imageLoaded;
 	BudgetbarIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
 	virtual void draw() const override;
 	virtual void onClick() = 0;   //The action that should be taken when this icon is clicked
@@ -83,7 +85,7 @@ public:
 	image grassImage;
 	point grassTiles[max_budget_items][grass_tiles_per_water];
 	int grassTileCounts[max_budget_items];
-	unsigned long grassLastDecayTick[max_budget_items];
+	unsigned long long grassLastDecayTick[max_budget_items];
 	int count = 0;
 	WaterIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
 	~WaterIcon();
@@ -130,6 +132,14 @@ public:
 	void resetAnimals();
 };
 
+class HelperIcon : public BudgetbarIcon
+{
+public:
+	HelperIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
+	virtual void draw() const override;
+	virtual void onClick();
+};
+
 
 // TO DO: The rest of icons in the toolbar
 
@@ -144,6 +154,7 @@ enum ANIMAL_ICONS //The icons of the toolbar (you should add more icons)
 	ICON_WATER,
 	ICON_DUCK,
 	ICON_DOG,
+	ICON_HELPER,
 
 	//TODO: Add more icons names here
 
@@ -162,6 +173,7 @@ public:
 	Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height);
 	~Budgetbar();
 	void draw() const override;
+	void drawPrices() const;
 	bool handleClick(int x, int y);	//handles clicks on toolbar icons, returns true if exit is clicked
 	void updateAnimals();
 	void resetAnimals();

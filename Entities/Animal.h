@@ -18,10 +18,11 @@ protected:
 private:
 	string image_path;
 	image sprite;
+	bool imageLoaded;
 	int dx, dy;
 	int changeCounter;
 	int movementCounter;
-	unsigned long lastProductTick;
+	unsigned long long lastProductTick;
 	int productIntervalMs;
 	ProductType productType;
 	int foodEatenCounter;
@@ -85,10 +86,24 @@ public:
 class Dog : public Animal
 {
 private:
-	unsigned long birthTick;
-	static const unsigned long lifetimeMs = 10000;
+	unsigned long long birthTick;
+	static const unsigned long long lifetimeMs = 10000;
 public:
 	Dog(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
+	virtual void moveStep();
+	void moveToward(point target);
+	bool isExpired() const;
+	int getRemainingLifetimeSeconds() const;
+	void drawLifetimeCounter() const;
+};
+
+class Farmer : public Animal
+{
+private:
+	unsigned long long birthTick;
+	static const unsigned long long lifetimeMs = 60000;
+public:
+	Farmer(Game* r_pGame, point r_point, int r_width, int r_height, string img_path);
 	virtual void moveStep();
 	void moveToward(point target);
 	bool isExpired() const;

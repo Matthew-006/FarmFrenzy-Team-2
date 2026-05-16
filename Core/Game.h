@@ -12,6 +12,7 @@ class Milk;
 class Wool;
 class Wolf;
 class duck;
+class Farmer;
 
 class Game
 {
@@ -42,7 +43,7 @@ private:
 	int warehouseMilk;
 	int warehouseWool;
 	bool isPaused;
-	unsigned long lastTime;
+	unsigned long long lastTime;
 	int timer;
 	int level;
 	int goal;
@@ -51,6 +52,8 @@ private:
 	std::string username;
 	bool exitRequested;
 	bool soundMuted;
+	bool helperActive;
+	Farmer* helperFarmer;
 	void DrawProducts() const;
 	void clearProducts();
 	void clearWolves();
@@ -60,6 +63,9 @@ private:
 	void handleProductClick(int x, int y);
 	bool handleWarehouseClick(int x, int y);
 	void sellWarehouseProduct(int& productCount, int price, const std::string& productName);
+	void updateHelper();
+	bool getNearestProductPoint(point fromPoint, point& productPoint) const;
+	bool collectProductAt(point farmerPoint, int farmerWidth, int farmerHeight);
 	void showRandomWolf();
 	void promptForUsername();
 	void drawStartScreen(const std::string& typedName, bool isGameOver = false, int lastScore = 0) const;
@@ -96,6 +102,7 @@ public:
 	void clearBudget() const;
 	void printBudget(std::string msg) const;
 	bool spendBudget(int amount);
+	void activateHelper();
 	void clearStatusBar() const;	//Clears the status bar
 	void startBackgroundMusic() const;
 	void stopBackgroundMusic() const;

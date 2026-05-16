@@ -12,14 +12,13 @@
 #include <mmsystem.h>
 #pragma comment(lib, "winmm.lib")
 #include <windows.h>   // ـ Beep
-#include <thread>      // in the background 
-#include <chrono>      
 namespace
 {
 	const int kFeedingAreaCenterX = 170;
 	const int kFeedingAreaCenterY = (2 * config.toolBarHeight) + 145;
 	const int kFeedingAreaRadius = 95;
-	const unsigned long kFoodConsumeDelayMs = 650;
+	const unsigned long long kFoodConsumeDelayMs = 650;
+	const unsigned long long kHelperDurationMs = 60000;
 	const char* kQuitUserName = "__QUIT__";
 	const char* kLeaderboardFileName = "leaderboard.txt";
 	const char* kSaveGameFileName = "savegame.txt";
@@ -116,20 +115,6 @@ namespace
 		const int sellButtonTop = rowY - 2;
 		return x >= sellButtonLeft && x <= sellButtonLeft + 31 &&
 			y >= sellButtonTop && y <= sellButtonTop + 17;
-	}
-
-	template <typename ProductType>
-	void writeProductList(std::ofstream& output, const std::string& label, ProductType* const* list, int count)
-	{
-		output << label << " " << count << std::endl;
-		for (int i = 0; i < count; i++)
-		{
-			if (list[i] != nullptr)
-			{
-				point p = list[i]->getRefPoint();
-				output << p.x << " " << p.y << std::endl;
-			}
-		}
 	}
 
 	template <typename ProductType>
@@ -296,91 +281,9 @@ namespace
 		return true;
 	}
 
-	bool readExpectedLabel(std::ifstream& input, const std::string& expected)
-	{
-		std::string label;
-		input >> label;
-		return input && label == expected;
-	}
-
-	template <typename ProductType>
-	bool readProductList(std::ifstream& input, const std::string& label, ProductType** list, int& count, int maxCount, Game* game)
-	{
-		if (!readExpectedLabel(input, label))
-		{
-			return false;
-		}
-
-		input >> count;
-		if (!input || count < 0 || count > maxCount)
-		{
-			return false;
-		}
-
-		for (int i = 0; i < count; i++)
-		{
-			point p;
-			input >> p.x >> p.y;
-			if (!input)
-			{
-				return false;
-			}
-
-			list[i] = new ProductType(game, p);
-		}
-
-		return true;
-	}
-
-	template <typename AnimalType>
-	bool readAnimalList(std::ifstream& input, const std::string& label, AnimalType** list, int& count, int maxCount, Game* game, const std::string& imagePath)
-	{
-		if (!readExpectedLabel(input, label))
-		{
-			return false;
-		}
-
-		input >> count;
-		if (!input || count < 0 || count > maxCount)
-		{
-			return false;
-		}
-
-		for (int i = 0; i < count; i++)
-		{
-			point p;
-			int dx, dy, changeCounter;
-			input >> p.x >> p.y >> dx >> dy >> changeCounter;
-			if (!input)
-			{
-				return false;
-			}
-
-			list[i] = new AnimalType(game, p, 50, 50, imagePath);
-			list[i]->setDx(dx);
-			list[i]->setDy(dy);
-			list[i]->setChangeCounter(changeCounter);
-		}
-
-		return true;
-	}
 }
-void PlayGameMusic() {	
-	while (true) {
-		
-		Beep(330, 300); Beep(330, 300); Beep(330, 600); 
-		Beep(330, 300); Beep(330, 300); Beep(330, 600); 
-		Beep(330, 300); Beep(392, 300); Beep(261, 300); Beep(293, 300); Beep(330, 600);
-
-		Sleep(500); 
-	}
-}
-
-
 Game::Game()
 {
-	std::thread musicThread(PlayGameMusic);
-	musicThread.detach();
 	wolfCount = 0;
 	for (int i = 0; i < kMaxProducts; i++) {
 		wolfList[i] = nullptr;
@@ -408,6 +311,8 @@ Game::Game()
 	username = "Player";
 	exitRequested = false;
 	soundMuted = false;
+	helperActive = false;
+	helperFarmer = nullptr;
 	lastTime = GetTickCount64();
 
 	//1 - Create the main window
@@ -462,6 +367,7 @@ Game::~Game()
 	}
 
 	clearWolves();
+	delete helperFarmer;
 
 	delete gameToolbar;
 	delete gameBudgetbar;
@@ -511,7 +417,7 @@ window* Game::CreateWind(int w, int h, int x, int y) const
 void Game::handleFeedingLogic()
 {
 	WaterIcon* waterIcon = gameBudgetbar->getWaterIcon();
-	unsigned long currentTick = GetTickCount();
+	unsigned long long currentTick = GetTickCount64();
 
 	for (int j = 0; j < waterIcon->count; j++)
 	{
@@ -612,7 +518,6 @@ void Game::drawFieldBackground() const
 
 void Game::drawWarehouse() const
 {
-	const int fieldTop = 2 * config.toolBarHeight;
 	const int fieldBottom = config.windHeight - config.statusBarHeight;
 	const int warehouseWidth = config.warehouseWidth;
 	const int warehouseHeight = config.warehouseHeight + 120;
@@ -735,6 +640,28 @@ bool Game::spendBudget(int amount)
 	budget -= amount;
 	printBudget("BUDGET = $" + to_string(budget));
 	return true;
+}
+
+void Game::activateHelper()
+{
+	if (helperFarmer != nullptr && !helperFarmer->isExpired())
+	{
+		printMessage("Farmer already working: " + to_string(helperFarmer->getRemainingLifetimeSeconds()) + "s left");
+		return;
+	}
+
+	if (!spendBudget(helper_cost))
+	{
+		return;
+	}
+
+	delete helperFarmer;
+	point startPoint;
+	startPoint.x = config.fieldPadding + 30;
+	startPoint.y = (2 * config.toolBarHeight) + config.fieldPadding + 30;
+	helperFarmer = new Farmer(this, startPoint, 50, 50, "images\\farmer.jpg");
+	helperActive = true;
+	printMessage("Farmer hired for " + to_string(static_cast<int>(kHelperDurationMs / 1000)) + "s");
 }
 
 void Game::clearStatusBar() const
@@ -1334,7 +1261,7 @@ bool Game::findFreeProductSpot(point& location, int width, int height) const
 
 void Game::updateTimer()
 {
-	unsigned long currentTime = GetTickCount64();
+	unsigned long long currentTime = GetTickCount64();
 
 	if (currentTime - lastTime >= 1000 && timer > 0)
 	{
@@ -1342,6 +1269,149 @@ void Game::updateTimer()
 		lastTime = currentTime;
 	}
 }
+
+void Game::updateHelper()
+{
+	if (helperFarmer == nullptr)
+	{
+		return;
+	}
+
+	if (helperFarmer->isExpired())
+	{
+		delete helperFarmer;
+		helperFarmer = nullptr;
+		helperActive = false;
+		printMessage("Farmer finished collecting products");
+		return;
+	}
+
+	point productPoint;
+	if (getNearestProductPoint(helperFarmer->getRefPoint(), productPoint))
+	{
+		helperFarmer->moveToward(productPoint);
+		if (collectProductAt(helperFarmer->getRefPoint(), 50, 50))
+		{
+			drawWarehouse();
+		}
+		return;
+	}
+
+	helperFarmer->moveStep();
+}
+
+bool Game::getNearestProductPoint(point fromPoint, point& productPoint) const
+{
+	bool foundProduct = false;
+	int bestDistance = 0;
+
+	for (int i = 0; i < eggCount; i++)
+	{
+		if (eggList[i] == nullptr)
+		{
+			continue;
+		}
+
+		point candidate = eggList[i]->getRefPoint();
+		const int dx = candidate.x - fromPoint.x;
+		const int dy = candidate.y - fromPoint.y;
+		const int distance = (dx * dx) + (dy * dy);
+		if (!foundProduct || distance < bestDistance)
+		{
+			foundProduct = true;
+			bestDistance = distance;
+			productPoint = candidate;
+		}
+	}
+
+	for (int i = 0; i < milkCount; i++)
+	{
+		if (milkList[i] == nullptr)
+		{
+			continue;
+		}
+
+		point candidate = milkList[i]->getRefPoint();
+		const int dx = candidate.x - fromPoint.x;
+		const int dy = candidate.y - fromPoint.y;
+		const int distance = (dx * dx) + (dy * dy);
+		if (!foundProduct || distance < bestDistance)
+		{
+			foundProduct = true;
+			bestDistance = distance;
+			productPoint = candidate;
+		}
+	}
+
+	for (int i = 0; i < woolCount; i++)
+	{
+		if (woolList[i] == nullptr)
+		{
+			continue;
+		}
+
+		point candidate = woolList[i]->getRefPoint();
+		const int dx = candidate.x - fromPoint.x;
+		const int dy = candidate.y - fromPoint.y;
+		const int distance = (dx * dx) + (dy * dy);
+		if (!foundProduct || distance < bestDistance)
+		{
+			foundProduct = true;
+			bestDistance = distance;
+			productPoint = candidate;
+		}
+	}
+
+	return foundProduct;
+}
+
+bool Game::collectProductAt(point farmerPoint, int farmerWidth, int farmerHeight)
+{
+	for (int i = 0; i < eggCount; i++)
+	{
+		if (eggList[i] != nullptr && rectanglesOverlap(farmerPoint, farmerWidth, farmerHeight, eggList[i]->getRefPoint(), 30, 30))
+		{
+			warehouseEgg++;
+			delete eggList[i];
+			eggList[i] = eggList[eggCount - 1];
+			eggList[eggCount - 1] = nullptr;
+			eggCount--;
+			printMessage("Farmer collected an egg");
+			return true;
+		}
+	}
+
+	for (int i = 0; i < milkCount; i++)
+	{
+		if (milkList[i] != nullptr && rectanglesOverlap(farmerPoint, farmerWidth, farmerHeight, milkList[i]->getRefPoint(), 40, 40))
+		{
+			warehouseMilk++;
+			delete milkList[i];
+			milkList[i] = milkList[milkCount - 1];
+			milkList[milkCount - 1] = nullptr;
+			milkCount--;
+			printMessage("Farmer collected milk");
+			return true;
+		}
+	}
+
+	for (int i = 0; i < woolCount; i++)
+	{
+		if (woolList[i] != nullptr && rectanglesOverlap(farmerPoint, farmerWidth, farmerHeight, woolList[i]->getRefPoint(), 36, 28))
+		{
+			warehouseWool++;
+			delete woolList[i];
+			woolList[i] = woolList[woolCount - 1];
+			woolList[woolCount - 1] = nullptr;
+			woolCount--;
+			printMessage("Farmer collected wool");
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void Game::checkLevelUp()
 {
 	if (score >= goal)
@@ -1507,6 +1577,9 @@ void Game::resetGameState()
 	warehouseEgg = 0;
 	warehouseMilk = 0;
 	warehouseWool = 0;
+	helperActive = false;
+	delete helperFarmer;
+	helperFarmer = nullptr;
 	lastTime = GetTickCount64();
 	gameBudgetbar->resetAnimals();
 }
@@ -1687,7 +1760,10 @@ void Game::loadGame()
 	level = loadedLevel;
 	goal = loadedGoal;
 	score = loadedScore;
-	lastTime = GetTickCount();
+	helperActive = false;
+	delete helperFarmer;
+	helperFarmer = nullptr;
+	lastTime = GetTickCount64();
 
 
 	if (!readLabelIntLine(input, "ANIMALS", loadedAnimals) || loadedAnimals < 0)
@@ -2085,6 +2161,7 @@ void Game::go()
 			handleFeedingLogic();
 			drawFoodArea();
 			DrawProducts();
+			updateHelper();
 			showRandomWolf();
 			for (int i = 0; i < wolfCount; i++) {
 				if (wolfList[i] != nullptr) {

@@ -1,6 +1,7 @@
 #include "Animal.h"
 #include "../Config/GameConfig.h"
 #include "../Core/Game.h"
+#include <fstream>
 #include <iostream>
 using namespace std;
 
@@ -37,14 +38,42 @@ namespace
 		right = warehouseRight + 12;
 		bottom = warehouseBottom + 4;
 	}
+
+	string resolveAssetPath(const string& path)
+	{
+		ifstream localFile(path.c_str());
+		if (localFile)
+		{
+			return path;
+		}
+
+		const string parentPath = "..\\" + path;
+		ifstream parentFile(parentPath.c_str());
+		if (parentFile)
+		{
+			return parentPath;
+		}
+
+		return path;
+	}
 }
 
 Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	image_path = img_path;
+	imageLoaded = false;
 	if (!image_path.empty())
 	{
-		sprite.Open(image_path);
+		image_path = resolveAssetPath(image_path);
+		try
+		{
+			sprite.Open(image_path);
+			imageLoaded = true;
+		}
+		catch (...)
+		{
+			imageLoaded = false;
+		}
 	}
 	curr_pos = r_point;
 	curr_vel.x = 1;
@@ -138,7 +167,20 @@ void Animal::draw() const
 {
 	//draw image of this object
 	window* pWind = pGame->getWind();
-	pWind->DrawImage(sprite, RefPoint.x, RefPoint.y, width, height);
+	if (imageLoaded)
+	{
+		pWind->DrawImage(sprite, RefPoint.x, RefPoint.y, width, height);
+	}
+	else
+	{
+		pWind->SetPen(BLACK, 1);
+		pWind->SetBrush(color(229, 214, 178));
+		pWind->DrawRectangle(RefPoint.x, RefPoint.y, RefPoint.x + width, RefPoint.y + height, FILLED, 6, 6);
+		pWind->SetBrush(color(226, 178, 122));
+		pWind->DrawCircle(RefPoint.x + (width / 2), RefPoint.y + 14, 9);
+		pWind->SetBrush(color(58, 117, 67));
+		pWind->DrawRectangle(RefPoint.x + 14, RefPoint.y + 25, RefPoint.x + width - 14, RefPoint.y + height - 6);
+	}
 }
 
 
@@ -150,8 +192,8 @@ bool Animal::isProductReady()
 		return false;
 	}
 
-	unsigned long currentTick = GetTickCount64();
-	if (currentTick - lastProductTick < static_cast<unsigned long>(productIntervalMs))
+	unsigned long long currentTick = GetTickCount64();
+	if (currentTick - lastProductTick < static_cast<unsigned long long>(productIntervalMs))
 	{
 		return false;
 	}
@@ -167,14 +209,14 @@ int Animal::getRemainingProductSeconds() const
 		return -1;
 	}
 
-	unsigned long currentTick = GetTickCount64();
-	unsigned long elapsedMs = currentTick - lastProductTick;
-	if (elapsedMs >= static_cast<unsigned long>(productIntervalMs))
+	unsigned long long currentTick = GetTickCount64();
+	unsigned long long elapsedMs = currentTick - lastProductTick;
+	if (elapsedMs >= static_cast<unsigned long long>(productIntervalMs))
 	{
 		return 0;
 	}
 
-	unsigned long remainingMs = static_cast<unsigned long>(productIntervalMs) - elapsedMs;
+	unsigned long long remainingMs = static_cast<unsigned long long>(productIntervalMs) - elapsedMs;
 	return static_cast<int>((remainingMs + 999) / 1000);
 }
 
@@ -346,17 +388,107 @@ bool Dog::isExpired() const
 
 int Dog::getRemainingLifetimeSeconds() const
 {
-	unsigned long elapsedMs = GetTickCount64() - birthTick;
+	unsigned long long elapsedMs = GetTickCount64() - birthTick;
 	if (elapsedMs >= lifetimeMs)
 	{
 		return 0;
 	}
 
-	unsigned long remainingMs = lifetimeMs - elapsedMs;
+	unsigned long long remainingMs = lifetimeMs - elapsedMs;
 	return static_cast<int>((remainingMs + 999) / 1000);
 }
 
 void Dog::drawLifetimeCounter() const
+{
+	window* pWind = pGame->getWind();
+	pWind->SetPen(BLACK, 1);
+	pWind->SetFont(12, BOLD, BY_NAME, "Arial");
+	pWind->DrawString(RefPoint.x + 17, RefPoint.y - 14, to_string(getRemainingLifetimeSeconds()));
+}
+
+Farmer::Farmer(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Animal(r_pGame, r_point, r_width, r_height, img_path)
+{
+	birthTick = GetTickCount64();
+	setDx(1);
+	setDy(1);
+}
+
+void Farmer::moveStep()
+{
+	moveInsideField(2, 40);
+	draw();
+	drawLifetimeCounter();
+}
+
+void Farmer::moveToward(point target)
+{
+	point farmerPoint = getRefPoint();
+	const int farmerCenterX = farmerPoint.x + (width / 2);
+	const int farmerCenterY = farmerPoint.y + (height / 2);
+	const int targetCenterX = target.x + 20;
+	const int targetCenterY = target.y + 20;
+	const int walkSpeed = 5;
+
+	if (targetCenterX > farmerCenterX)
+	{
+		setDx(walkSpeed);
+	}
+	else if (targetCenterX < farmerCenterX)
+	{
+		setDx(-walkSpeed);
+	}
+	else
+	{
+		setDx(0);
+	}
+
+	if (targetCenterY > farmerCenterY)
+	{
+		setDy(walkSpeed);
+	}
+	else if (targetCenterY < farmerCenterY)
+	{
+		setDy(-walkSpeed);
+	}
+	else
+	{
+		setDy(0);
+	}
+
+	point oldPoint = RefPoint;
+	RefPoint.x += getDx();
+	RefPoint.y += getDy();
+
+	if (RefPoint.x < config.fieldPadding ||
+		RefPoint.y < (2 * config.toolBarHeight) + config.fieldPadding ||
+		RefPoint.x > config.windWidth - config.fieldPadding - width ||
+		RefPoint.y > config.windHeight - config.statusBarHeight - config.fieldPadding - height)
+	{
+		RefPoint = oldPoint;
+	}
+
+	draw();
+	drawLifetimeCounter();
+}
+
+bool Farmer::isExpired() const
+{
+	return GetTickCount64() - birthTick >= lifetimeMs;
+}
+
+int Farmer::getRemainingLifetimeSeconds() const
+{
+	unsigned long long elapsedMs = GetTickCount64() - birthTick;
+	if (elapsedMs >= lifetimeMs)
+	{
+		return 0;
+	}
+
+	unsigned long long remainingMs = lifetimeMs - elapsedMs;
+	return static_cast<int>((remainingMs + 999) / 1000);
+}
+
+void Farmer::drawLifetimeCounter() const
 {
 	window* pWind = pGame->getWind();
 	pWind->SetPen(BLACK, 1);

@@ -1,20 +1,61 @@
 #include "Product.h"
 #include "Core/Game.h"
+#include <fstream>
+
+namespace
+{
+	std::string resolveAssetPath(const std::string& path)
+	{
+		std::ifstream localFile(path.c_str());
+		if (localFile)
+		{
+			return path;
+		}
+
+		const std::string parentPath = "..\\" + path;
+		std::ifstream parentFile(parentPath.c_str());
+		if (parentFile)
+		{
+			return parentPath;
+		}
+
+		return path;
+	}
+}
 
 Product::Product(Game* r_pGame, point r_point, int r_width, int r_height, std::string img_path)
 	: Drawable(r_pGame, r_point, r_width, r_height)
 {
 	image_path = img_path;
+	imageLoaded = false;
 	if (!image_path.empty())
 	{
-		sprite.Open(image_path);
+		image_path = resolveAssetPath(image_path);
+		try
+		{
+			sprite.Open(image_path);
+			imageLoaded = true;
+		}
+		catch (...)
+		{
+			imageLoaded = false;
+		}
 	}
 }
 
 void Product::draw() const
 {
 	window* pWind = pGame->getWind();
-	pWind->DrawImage(sprite, RefPoint.x, RefPoint.y, width, height);
+	if (imageLoaded)
+	{
+		pWind->DrawImage(sprite, RefPoint.x, RefPoint.y, width, height);
+	}
+	else
+	{
+		pWind->SetPen(BLACK, 1);
+		pWind->SetBrush(WHITE);
+		pWind->DrawRectangle(RefPoint.x, RefPoint.y, RefPoint.x + width, RefPoint.y + height, FILLED, 5, 5);
+	}
 }
 
 bool Product::isClicked(int x, int y) const

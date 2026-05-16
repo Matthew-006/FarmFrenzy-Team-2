@@ -2,6 +2,7 @@
 #include "../Config/GameConfig.h"
 #include "../Core/Game.h"
 #include <cmath>
+#include <fstream>
 #include <iostream>
 using namespace std;
 
@@ -12,7 +13,6 @@ namespace
 	const int feeding_area_radius = 95;
 	const int grass_tile_size = 28;
 	const int grass_consume_distance = 42;
-	const unsigned long grass_consume_delay_ms = 650;
 
 	bool isInsideFieldTile(const point& p, int tileSize)
 	{
@@ -60,6 +60,21 @@ namespace
 		return true;
 	}
 
+	int getIconPrice(int iconIndex)
+	{
+		if (iconIndex == ICON_DOG)
+		{
+			return dog_cost;
+		}
+
+		if (iconIndex == ICON_HELPER)
+		{
+			return helper_cost;
+		}
+
+		return animal_cost;
+	}
+
 	void drawGrassTile(window* pWind, const point& p)
 	{
 		pWind->SetPen(color(56, 122, 48), 1);
@@ -77,15 +92,43 @@ namespace
 		pWind->SetBrush(color(163, 220, 248));
 		pWind->DrawCircle(p.x + 13, p.y + 13, 5);
 	}
+
+	string resolveAssetPath(const string& path)
+	{
+		ifstream localFile(path.c_str());
+		if (localFile)
+		{
+			return path;
+		}
+
+		const string parentPath = "..\\" + path;
+		ifstream parentFile(parentPath.c_str());
+		if (parentFile)
+		{
+			return parentPath;
+		}
+
+		return path;
+	}
 }
 
 
 BudgetbarIcon::BudgetbarIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	image_path = img_path;
+	imageLoaded = false;
 	if (!image_path.empty())
 	{
-		iconImage.Open(image_path);
+		image_path = resolveAssetPath(image_path);
+		try
+		{
+			iconImage.Open(image_path);
+			imageLoaded = true;
+		}
+		catch (...)
+		{
+			imageLoaded = false;
+		}
 	}
 }
 
@@ -93,7 +136,16 @@ void BudgetbarIcon::draw() const
 {
 	//draw image of this object
 	window* pWind = pGame->getWind();
-	pWind->DrawImage(iconImage, RefPoint.x, RefPoint.y, width, height);
+	if (imageLoaded)
+	{
+		pWind->DrawImage(iconImage, RefPoint.x, RefPoint.y, width, height);
+	}
+	else
+	{
+		pWind->SetPen(BLACK, 1);
+		pWind->SetBrush(color(240, 236, 214));
+		pWind->DrawRectangle(RefPoint.x, RefPoint.y, RefPoint.x + width, RefPoint.y + height);
+	}
 }
 
 ChickIcon::ChickIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : BudgetbarIcon(r_pGame, r_point, r_width, r_height, img_path)
@@ -462,7 +514,7 @@ void WaterIcon::onClick()
 		}
 
 		waterList[count] = new Water(pGame, p, 50, 50, image_path);
-		grassLastDecayTick[count] = GetTickCount();
+		grassLastDecayTick[count] = GetTickCount64();
 		drawWaterPatch(pWind, p);
 		count++;
 	}
@@ -471,7 +523,6 @@ void WaterIcon::onClick()
 void WaterIcon::updateAnimals()
 {
 	window* pWind = pGame->getWind();
-	unsigned long currentTick = GetTickCount();
 
 	for (int i = 0; i < count; i++)
 	{
@@ -814,6 +865,36 @@ void DogIcon::resetAnimals()
 	count = 0;
 }
 
+HelperIcon::HelperIcon(Game* r_pGame, point r_point, int r_width, int r_height, string img_path)
+	: BudgetbarIcon(r_pGame, r_point, r_width, r_height, img_path)
+{
+}
+
+void HelperIcon::draw() const
+{
+	window* pWind = pGame->getWind();
+	if (imageLoaded)
+	{
+		BudgetbarIcon::draw();
+	}
+	else
+	{
+		pWind->SetPen(color(42, 95, 52), 2);
+		pWind->SetBrush(color(229, 214, 178));
+		pWind->DrawRectangle(RefPoint.x + 4, RefPoint.y + 4, RefPoint.x + width - 4, RefPoint.y + height - 4, FILLED, 6, 6);
+		pWind->SetBrush(color(226, 178, 122));
+		pWind->DrawCircle(RefPoint.x + 35, RefPoint.y + 17, 9);
+		pWind->SetBrush(color(58, 117, 67));
+		pWind->DrawRectangle(RefPoint.x + 25, RefPoint.y + 26, RefPoint.x + 45, RefPoint.y + height - 6);
+	}
+}
+
+void HelperIcon::onClick()
+{
+	cout << "Icon Helper Clicked" << endl;
+	pGame->activateHelper();
+}
+
 Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : Drawable(r_pGame, r_point, r_width, r_height)
 {
 	//First prepare List of images for each icon
@@ -821,10 +902,11 @@ Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : 
 	iconsImages[ICON_CHICK] = "images\\chick (3).JPEG";
 	iconsImages[ICON_COW] = "images\\cow.JPEG";
 	iconsImages[ICON_GOAT] = "images\\goat.JPEG";
-	iconsImages[ICON_SHEEP] = "images\\sheep.JPEG";
+	iconsImages[ICON_SHEEP] = "images\\sheep.jpg";
 	iconsImages[ICON_WATER] = "images\\water.JPEG";
 	iconsImages[ICON_DUCK] = "images\\duck.jpg";
 	iconsImages[ICON_DOG] = "images\\dog.jpg";
+	iconsImages[ICON_HELPER] = "images\\farmer.jpg";
 
 	point p;
 	p.x = 0;
@@ -853,6 +935,9 @@ Budgetbar::Budgetbar(Game* r_pGame, point r_point, int r_width, int r_height) : 
 	
 	iconsList[ICON_DOG] = new DogIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_DOG]);
 	p.x += config.iconWidth;
+
+	iconsList[ICON_HELPER] = new HelperIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_HELPER]);
+	p.x += config.iconWidth;
 	//p.x += config.iconWidth;
 	//iconsList[ICON_CHICK] = new ChickIcon(pGame, p, config.iconWidth, config.toolBarHeight, iconsImages[ICON_CHICK]);
 }
@@ -867,10 +952,29 @@ Budgetbar::~Budgetbar()
 void Budgetbar::draw() const
 {
 	for (int i = 0; i < ANIMAL_COUNT; i++)
+	{
 		iconsList[i]->draw();
+	}
+
 	window* pWind = pGame->getWind();
 	pWind->SetPen(BLACK, 3);
 	pWind->DrawLine(0, 2*config.toolBarHeight, pWind->GetWidth(), 2*config.toolBarHeight);
+}
+
+void Budgetbar::drawPrices() const
+{
+	window* pWind = pGame->getWind();
+	const int labelTop = (2 * config.toolBarHeight) + 2;
+	for (int i = 0; i < ANIMAL_COUNT; i++)
+	{
+		const int left = i * config.iconWidth;
+		pWind->SetPen(BLACK, 1);
+		pWind->SetBrush(color(248, 239, 214));
+		pWind->DrawRectangle(left + 8, labelTop, left + config.iconWidth - 8, labelTop + 16, FILLED, 4, 4);
+		pWind->SetPen(color(26, 78, 36), 1);
+		pWind->SetFont(11, BOLD, BY_NAME, "Arial");
+		pWind->DrawString(left + 20, labelTop + 1, "$" + to_string(getIconPrice(i)));
+	}
 }
 
 bool Budgetbar::handleClick(int x, int y)
