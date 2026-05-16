@@ -1,4 +1,4 @@
-#include "Animal.h"
+﻿#include "Animal.h"
 #include "../Config/GameConfig.h"
 #include "../Core/Game.h"
 #include <fstream>
@@ -75,6 +75,8 @@ namespace
 
 Animal::Animal(Game* r_pGame, point r_point, int r_width, int r_height, string img_path) : Drawable(r_pGame, r_point, r_width, r_height)
 {
+	happiness = maxHappiness; 
+	lastHappinessTick = GetTickCount64();
 	image_path = img_path;
 	imageLoaded = false;
 	if (!image_path.empty())
@@ -201,7 +203,19 @@ void Animal::draw() const
 
 
 bool Animal::isProductReady()
-{
+{ 
+		updateHappiness();
+
+		if (happiness <= 0)
+		{
+			return false;
+		}
+
+		if (productIntervalMs <= 0)
+		{
+			return false;
+	
+	}
 	if (productIntervalMs <= 0)
 	{
 		return false;
@@ -246,6 +260,9 @@ void Animal::drawCounter() const
 		pWind->SetPen(BLACK, 1);
 		pWind->DrawString(RefPoint.x + 8, RefPoint.y - 14, to_string(remainingSeconds));
 	}
+	pWind->SetPen(happiness > 20 ? color(0, 0, 255) : color(255, 0, 0), 1); // أزرق لو سعيد، أحمر لو حزين جداً
+	string happinessText = "Happy: " + to_string(happiness) + "% " + (happiness <= 0 ? "CS" : " ");
+	pWind->DrawString(RefPoint.x + 3, RefPoint.y + height + 14, happinessText);
 
 	pWind->SetPen(color(21, 102, 45), 1);
 	pWind->DrawString(RefPoint.x + 3, RefPoint.y + height + 2, "Food: " + to_string(foodEatenCounter));
@@ -298,6 +315,7 @@ Cow::Cow(Game* r_pGame, point r_point, int r_width, int r_height, string img_pat
 
 void Cow::moveStep()
 {
+	updateHappiness();
 	moveInsideField(1, 70);
 
 	if (isProductReady())
@@ -317,6 +335,7 @@ Wolf::Wolf(Game* r_pGame, point r_point, int r_width, int r_height, string img_p
 
 void Wolf::moveStep()
 {
+	updateHappiness();
 	int level = pGame->getLevel();
 	int speedRange = 1 + ((level - 1) / 3);
 	if (speedRange > 4)
@@ -338,6 +357,7 @@ Dog::Dog(Game* r_pGame, point r_point, int r_width, int r_height, string img_pat
 
 void Dog::moveStep()
 {
+	updateHappiness();
 	moveInsideField(3, 35);
 	draw();
 	drawCounter();
@@ -346,6 +366,7 @@ void Dog::moveStep()
 
 void Dog::moveToward(point target)
 {
+	
 	point dogPoint = getRefPoint();
 	const int dogCenterX = dogPoint.x + 25;
 	const int dogCenterY = dogPoint.y + 25;
@@ -552,5 +573,25 @@ void Duck::moveStep()
 
 	draw();
 	drawCounter();
+
+}
+
+
+void Animal::decreaseHappiness(int amount) {
+	happiness -= amount;
+	if (happiness < 0) happiness = 0;
+}
+
+void Animal::increaseHappiness(int amount) {
+	happiness += amount;
+	if (happiness > maxHappiness) happiness = maxHappiness;
+}
+
+void Animal::updateHappiness() {
+	unsigned long long currentTick = GetTickCount64();
+	
+	if (currentTick - lastHappinessTick >= 15000) {
+		decreaseHappiness(5);
+		lastHappinessTick = currentTick; 
 }
 
