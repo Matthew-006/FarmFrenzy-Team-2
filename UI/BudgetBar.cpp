@@ -75,6 +75,21 @@ namespace
 		return animal_cost;
 	}
 
+	template <typename AnimalType>
+	int countAnimals(AnimalType* const* list, int count)
+	{
+		int total = 0;
+		for (int i = 0; i < count; i++)
+		{
+			if (list[i] != nullptr)
+			{
+				total++;
+			}
+		}
+
+		return total;
+	}
+
 	void drawGrassTile(window* pWind, const point& p)
 	{
 		pWind->SetPen(color(56, 122, 48), 1);
@@ -1038,11 +1053,17 @@ void Budgetbar::resetAnimals()
 
 int Budgetbar::getAnimalCount() const
 {
-	return ((ChickIcon*)iconsList[ICON_CHICK])->count +
-		((CowIcon*)iconsList[ICON_COW])->count +
-		((GoatIcon*)iconsList[ICON_GOAT])->count +
-		((SheepIcon*)iconsList[ICON_SHEEP])->count+
-		((DuckIcon*)iconsList[ICON_DUCK])->count;
+	ChickIcon* chickIcon = (ChickIcon*)iconsList[ICON_CHICK];
+	CowIcon* cowIcon = (CowIcon*)iconsList[ICON_COW];
+	GoatIcon* goatIcon = (GoatIcon*)iconsList[ICON_GOAT];
+	SheepIcon* sheepIcon = (SheepIcon*)iconsList[ICON_SHEEP];
+	DuckIcon* duckIcon = (DuckIcon*)iconsList[ICON_DUCK];
+
+	return countAnimals(chickIcon->chickList, chickIcon->count) +
+		countAnimals(cowIcon->cowList, cowIcon->count) +
+		countAnimals(goatIcon->goatList, goatIcon->count) +
+		countAnimals(sheepIcon->sheepList, sheepIcon->count) +
+		countAnimals(duckIcon->duckList, duckIcon->count);
 }
 
 

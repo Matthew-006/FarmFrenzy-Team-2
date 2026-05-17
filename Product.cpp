@@ -95,6 +95,10 @@ void Wool::draw() const
 	pWind->DrawCircle(RefPoint.x + 26, RefPoint.y + 12, 8);
 	pWind->DrawCircle(RefPoint.x + 15, RefPoint.y + 18, 8);
 	pWind->DrawCircle(RefPoint.x + 23, RefPoint.y + 18, 8);
+
+	pWind->SetPen(RED, 1);
+	pWind->SetFont(12, BOLD, BY_NAME, "Arial");
+	pWind->DrawString(RefPoint.x, RefPoint.y - 12, to_string(getRemainingSeconds()) + "s");
 }
 bool Product::isExpired() const
 {

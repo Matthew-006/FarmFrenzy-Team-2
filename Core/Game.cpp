@@ -178,6 +178,21 @@ namespace
 	}
 
 	template <typename AnimalType>
+	int countAnimalRows(AnimalType* const* list, int count)
+	{
+		int savedCount = 0;
+		for (int i = 0; i < count; i++)
+		{
+			if (list[i] != nullptr)
+			{
+				savedCount++;
+			}
+		}
+
+		return savedCount;
+	}
+
+	template <typename AnimalType>
 	void writeAnimalRows(std::ofstream& output, const std::string& animalType, AnimalType* const* list, int count)
 	{
 		for (int i = 0; i < count; i++)
@@ -674,8 +689,13 @@ bool Game::spendBudget(int amount)
 		return false;
 	}
 
+	const int previousBudget = budget;
 	budget -= amount;
 	printBudget("BUDGET = $" + to_string(budget));
+	if (amount > 0)
+	{
+		checkBudgetMilestone(previousBudget);
+	}
 	return true;
 }
 
@@ -1586,7 +1606,6 @@ void Game::sellWarehouseProduct(int& productCount, int price, const std::string&
 
 	productCount--;
 	budget += price;
-	checkBudgetMilestone();
 	score += price;
 	printBudget("BUDGET = $" + to_string(budget));
 	drawWarehouse();
@@ -1659,7 +1678,12 @@ void Game::saveGame() const
 	SheepIcon* sheepIcon = gameBudgetbar->getSheepIcon();
 	DuckIcon* duckIcon = gameBudgetbar->getDuckIcon();
 	WaterIcon* waterIcon = gameBudgetbar->getWaterIcon();
-	const int savedAnimalCount = chickIcon->count + cowIcon->count + goatIcon->count + sheepIcon->count + duckIcon->count;
+	const int savedAnimalCount =
+		countAnimalRows(chickIcon->chickList, chickIcon->count) +
+		countAnimalRows(cowIcon->cowList, cowIcon->count) +
+		countAnimalRows(goatIcon->goatList, goatIcon->count) +
+		countAnimalRows(sheepIcon->sheepList, sheepIcon->count) +
+		countAnimalRows(duckIcon->duckList, duckIcon->count);
 
 	output << "LEVEL " << level << "    // Current level" << std::endl;
 	output << "BUDGET " << budget << "    // Current player budget" << std::endl;
@@ -2120,18 +2144,16 @@ bool Game::getNearestWolfPoint(point fromPoint, point& wolfPoint) const
 
 	return foundWolf;
 }
-void Game::checkBudgetMilestone()
+void Game::checkBudgetMilestone(int previousBudget)
 {
-	const int milestones[] = { 1000, 2000, 3000, 5000, 10000 };
-	const int milestoneCount = 5;
+	const int milestones[] = { 10000, 5000, 3000, 2000, 1000, 100 };
+	const int milestoneCount = 6;
 
 	for (int i = 0; i < milestoneCount; i++)
 	{
-		if (budget >= milestones[i] && lastMilestoneBudget < milestones[i])
+		if (previousBudget > milestones[i] && budget <= milestones[i])
 		{
-			lastMilestoneBudget = milestones[i];
-
-			pWind->SetPen(color(37, 92, 48), 1);
+			pWind->SetPen(RED, 1);
 			pWind->SetFont(36, BOLD, BY_NAME, "Arial");
 			pWind->DrawString(
 				config.windWidth / 2 - 200,
@@ -2285,7 +2307,10 @@ void Game::go()
 						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, duckIcon->duckList[j]->getRefPoint(), 50, 50))
 						{
 							delete duckIcon->duckList[j];
-							duckIcon->duckList[j] = nullptr;
+							duckIcon->duckList[j] = duckIcon->duckList[duckIcon->count - 1];
+							duckIcon->duckList[duckIcon->count - 1] = nullptr;
+							duckIcon->count--;
+							j--;
 							animals--;
 							printMessage("A wolf ate your duck !");
 						}
@@ -2298,7 +2323,10 @@ void Game::go()
 						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, chikIcon->chickList[j]->getRefPoint(), 50, 50))
 						{
 							delete chikIcon->chickList[j];
-							chikIcon->chickList[j] = nullptr;
+							chikIcon->chickList[j] = chikIcon->chickList[chikIcon->count - 1];
+							chikIcon->chickList[chikIcon->count - 1] = nullptr;
+							chikIcon->count--;
+							j--;
 							animals--;
 							printMessage("A wolf ate your chicken !");
 
@@ -2313,7 +2341,10 @@ void Game::go()
 						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, sheepIcon->sheepList[j]->getRefPoint(), 50, 50))
 						{
 							delete sheepIcon->sheepList[j];
-							sheepIcon->sheepList[j] = nullptr;
+							sheepIcon->sheepList[j] = sheepIcon->sheepList[sheepIcon->count - 1];
+							sheepIcon->sheepList[sheepIcon->count - 1] = nullptr;
+							sheepIcon->count--;
+							j--;
 							animals--;
 							printMessage("A wolf ate your sheep !");
 						}
@@ -2326,7 +2357,10 @@ void Game::go()
 						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, cowIcon->cowList[j]->getRefPoint(), 50, 50))
 						{
 							delete cowIcon->cowList[j];
-							cowIcon->cowList[j] = nullptr;
+							cowIcon->cowList[j] = cowIcon->cowList[cowIcon->count - 1];
+							cowIcon->cowList[cowIcon->count - 1] = nullptr;
+							cowIcon->count--;
+							j--;
 							animals--;
 							printMessage("A wolf ate your cow !");
 						}
@@ -2339,7 +2373,10 @@ void Game::go()
 						if (rectanglesOverlap(wolfList[i]->getRefPoint(), 50, 50, goatIcon->goatList[j]->getRefPoint(), 50, 50))
 						{
 							delete goatIcon->goatList[j];
-							goatIcon->goatList[j] = nullptr;
+							goatIcon->goatList[j] = goatIcon->goatList[goatIcon->count - 1];
+							goatIcon->goatList[goatIcon->count - 1] = nullptr;
+							goatIcon->count--;
+							j--;
 							animals--;
 							printMessage("A wolf ate your goat !");
 						}

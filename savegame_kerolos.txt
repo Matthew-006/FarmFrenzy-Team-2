@@ -1,30 +1,42 @@
-LEVEL 3    // Current level
-BUDGET 330    // Current player budget
-SCORE 1830    // Current player score from sold products
-TIMER 100    // Remaining time in seconds
-GOAL 2300    // Level goal
+LEVEL 1    // Current level
+BUDGET 0    // Current player budget
+SCORE 100    // Current player score from sold products
+TIMER 44    // Remaining time in seconds
+GOAL 700    // Level goal
 PAUSED 0    // 1 if game is paused, 0 otherwise
 USERNAME kerolos    // Current player name
 
-ANIMALS 11    // Number of saved animals
+ANIMALS 13    // Number of saved animals
 // TYPE X Y DX DY COUNTER    Animal type, position, velocity, and movement counter
-CHICK 625 399 -2 -1 2500
-COW 428 371 -1 1 2520
-COW 868 466 -1 1 1971
-COW 178 309 -1 1 1967
-COW 590 296 -1 -1 1751
-COW 603 376 -1 1 367
-COW 425 341 1 1 319
-GOAT 320 321 -1 2 2535
-GOAT 332 383 2 2 348
-GOAT 849 448 2 -1 288
-SHEEP 514 168 1 -1 2240
+SHEEP 112 129 1 -1 946
+SHEEP 845 290 -1 -1 1086
+SHEEP 869 204 1 1 1082
+SHEEP 118 300 1 -1 1074
+SHEEP 224 469 1 1 1020
+SHEEP 641 466 1 -1 1062
+SHEEP 670 419 1 1 1058
+SHEEP 44 401 1 1 1055
+SHEEP 662 228 1 -1 968
+SHEEP 602 398 -1 1 1049
+SHEEP 603 447 1 -1 1048
+SHEEP 709 359 -1 1 981
+SHEEP 244 309 -1 -1 1030
 
-WOLVES 0    // Number of alive wolves
+WOLVES 1    // Number of alive wolves
 // WOLF X Y DX DY COUNTER    Wolf label, position, velocity, and movement counter
+WOLF 790 238 1 -1 84
 
-FOODAREAS 0    // Number of active food areas
+FOODAREAS 1    // Number of active food areas
 // FOOD X Y COUNT    Food label, position, and remaining food tile count
+FOOD 196 228 8
+GRASS 196 228
+GRASS 168 228
+GRASS 224 228
+GRASS 196 200
+GRASS 196 256
+GRASS 176 208
+GRASS 216 208
+GRASS 196 248
 
 WAREHOUSE    // Start of warehouse data
 EGGS 0    // Eggs stored in warehouse
@@ -34,4 +46,44 @@ WOOL 0    // Wool stored in warehouse
 PRODUCTS    // Products still on the field
 EGGS 0
 MILK 0
-WOOL 0
+WOOL 40
+WOOL 505 456
+WOOL 726 432
+WOOL 805 412
+WOOL 114 431
+WOOL 281 196
+WOOL 252 311
+WOOL 235 205
+WOOL 298 490
+WOOL 405 374
+WOOL 750 205
+WOOL 812 453
+WOOL 93 318
+WOOL 67 223
+WOOL 275 249
+WOOL 692 234
+WOOL 171 187
+WOOL 781 496
+WOOL 928 214
+WOOL 177 374
+WOOL 742 175
+WOOL 766 425
+WOOL 703 477
+WOOL 83 365
+WOOL 635 484
+WOOL 741 242
+WOOL 556 478
+WOOL 812 203
+WOOL 132 171
+WOOL 859 449
+WOOL 880 238
+WOOL 122 351
+WOOL 839 318
+WOOL 726 380
+WOOL 103 462
+WOOL 578 307
+WOOL 616 377
+WOOL 599 495
+WOOL 843 420
+WOOL 322 272
+WOOL 160 435
