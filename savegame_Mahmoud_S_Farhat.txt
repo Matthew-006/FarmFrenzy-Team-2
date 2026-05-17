@@ -1,0 +1,34 @@
+LEVEL 1    // Current level
+BUDGET 1500    // Current player budget
+SCORE 0    // Current player score from sold products
+TIMER 65    // Remaining time in seconds
+GOAL 700    // Level goal
+PAUSED 0    // 1 if game is paused, 0 otherwise
+USERNAME Mahmoud S.Farhat    // Current player name
+
+ANIMALS 5    // Number of saved animals
+// TYPE X Y DX DY COUNTER    Animal type, position, velocity, and movement counter
+CHICK 207 310 2 1 372
+COW 886 306 1 1 522
+SHEEP 553 341 -1 1 411
+
+WOLVES 5   // Number of alive wolves
+// WOLF X Y DX DY COUNTER    Wolf label, position, velocity, and movement counter
+WOLF 400 433 -1 1 427
+
+FOODAREAS 0    // Number of active food areas
+// FOOD X Y COUNT    Food label, position, and remaining food tile count
+
+WAREHOUSE    // Start of warehouse data
+EGGS 0    // Eggs stored in warehouse
+MILK 0    // Milk bottles stored in warehouse
+WOOL 0    // Wool stored in warehouse
+
+PRODUCTS    // Products still on the field
+EGGS 1
+EGG 217 381
+MILK 2
+MILK 781 366
+MILK 892 337
+WOOL 1
+WOOL 643 232
